@@ -2,7 +2,7 @@ use anyhow::bail;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
-use base64::prelude::{BASE64_URL_SAFE, BASE64_URL_SAFE_NO_PAD};
+use base64::prelude::{BASE64_URL_SAFE_NO_PAD};
 
 pub struct JwtParser<'a, T> {
     pub parts: Vec<&'a str>,

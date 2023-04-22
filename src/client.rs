@@ -1,7 +1,7 @@
 use anyhow::bail;
 use lazy_static::lazy_static;
 use crate::{Cert, Certs, GooglePayload, JwtParser};
-use std::time::{SystemTime, Duration, UNIX_EPOCH};
+use std::time::{Duration};
 use base64::Engine;
 use rsa::BigUint;
 use rsa::pkcs1v15::VerifyingKey;
@@ -74,8 +74,8 @@ impl Client {
         let de = Self::decode(cert.e.as_ref())?;
 
         let pk = rsa::RsaPublicKey::new(
-            BigUint::from_bytes_le(dn.as_slice()),
-            BigUint::from_bytes_le(de.as_slice()),
+            BigUint::from_bytes_be(dn.as_slice()),
+            BigUint::from_bytes_be(de.as_slice()),
         )?;
 
         let verifying_key: VerifyingKey<Sha256> = VerifyingKey::from(pk);
@@ -87,7 +87,7 @@ impl Client {
         Ok(())
     }
 
-    fn validate_es256(&self, kid: &str, hashed_content: &str, sig: &[u8]) -> anyhow::Result<()> {
+    fn validate_es256(&self, _kid: &str, _hashed_content: &str, _sig: &[u8]) -> anyhow::Result<()> {
         Ok(())
     }
 
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn verify_aqab() {
-        let s = "AQAB";
+        let _s = "AQAB";
         let a = BigUint::parse_bytes(b"65535", 10).unwrap();
         dbg!(a);
         let b = BigUint::from_bytes_be(b"A");
