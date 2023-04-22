@@ -12,6 +12,4 @@ pub struct Cert {
     pub alg: String,
     pub kty: String,
     pub n: String,
-    #[serde(rename = "use")]
-    pub u: String,
 }

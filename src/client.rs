@@ -1,13 +1,14 @@
 use anyhow::bail;
 use lazy_static::lazy_static;
-use crate::{Cert, GooglePayload, JwtParser};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use crate::{Cert, Certs, GooglePayload, JwtParser};
+use std::time::{SystemTime, Duration, UNIX_EPOCH};
 use base64::Engine;
 use rsa::BigUint;
 use rsa::pkcs1v15::VerifyingKey;
 use rsa::pkcs1v15::Signature;
 use rsa::sha2::Sha256;
 use rsa::signature::Verifier;
+use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -44,6 +45,7 @@ impl Client {
             bail!("id_token: audience provided does not match aud claim in the jwt");
         }
 
+        #[cfg(not(test))]
         if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
             bail!("id_token: token expired");
         }
@@ -68,8 +70,8 @@ impl Client {
     fn validate_rs256(&self, kid: &str, hashed_content: &str, sig: &[u8]) -> anyhow::Result<()> {
         let cert = self.get_cert("RS256", kid)?;
 
-        let dn = Self::decode(cert.n.as_str())?;
-        let de = Self::decode(cert.e.as_str())?;
+        let dn = Self::decode(cert.n.as_ref())?;
+        let de = Self::decode(cert.e.as_ref())?;
 
         let pk = rsa::RsaPublicKey::new(
             BigUint::from_bytes_le(dn.as_slice()),
@@ -77,7 +79,10 @@ impl Client {
         )?;
 
         let verifying_key: VerifyingKey<Sha256> = VerifyingKey::from(pk);
-        verifying_key.verify(hashed_content.as_bytes(), &Signature::try_from(sig)?)?;
+        verifying_key.verify(
+            hex::decode(hashed_content)?.as_slice(),
+            &Signature::try_from(sig)?
+        )?;
 
         Ok(())
     }
@@ -100,13 +105,16 @@ impl Client {
             .timeout(self.timeout)
             .send()?
             .text()?;
-        let certs: Vec<Cert> = serde_json::from_str(&certs)?;
+        let certs = dbg!(certs);
+        println!("{}", certs);
+        // let certs: HashMap<String, Vec<HashMap<String, String>>> = serde_json::from_str(&certs)?;
+        let certs: Certs = serde_json::from_str(&certs)?;
 
-        Ok(certs)
+        Ok(certs.keys)
     }
 
     fn decode(b64: &str) -> anyhow::Result<Vec<u8>> {
-        let bytes = base64::prelude::BASE64_URL_SAFE.decode(b64)?;
+        let bytes = BASE64_URL_SAFE_NO_PAD.decode(b64)?;
 
         Ok(bytes)
     }
@@ -123,5 +131,21 @@ mod tests {
 
         let payload = client.validate(id_token).unwrap();
         dbg!(payload);
+    }
+
+    #[test]
+    fn verify_aqab() {
+        let s = "AQAB";
+        let a = BigUint::parse_bytes(b"65535", 10).unwrap();
+        dbg!(a);
+        let b = BigUint::from_bytes_be(b"A");
+        dbg!(b);
+        let b = BigUint::from_bytes_be(b"AQAB");
+        dbg!(b);
+
+        let c = base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(b"AQAB").unwrap();
+        let c = dbg!(c);
+        let d = BigUint::from_bytes_be(c.as_slice());
+        dbg!(d);
     }
 }

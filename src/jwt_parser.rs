@@ -31,7 +31,6 @@ impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
 
     fn parse_header(header: &str) -> anyhow::Result<JwtHeader> {
         let header = BASE64_URL_SAFE_NO_PAD.decode(header)?;
-        let header = dbg!(header);
         let jh: JwtHeader = serde_json::from_slice(header.as_slice())?;
 
         Ok(jh)
