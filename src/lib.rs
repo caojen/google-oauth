@@ -10,3 +10,7 @@ pub use client::*;
 pub use output::*;
 pub use jwt_parser::*;
 pub use certs::*;
+
+const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
+const GOOGLE_ISS: &str = "https://accounts.google.com";
+const DEFAULT_TIMEOUT: u64 = 5u64;

@@ -11,9 +11,9 @@ lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
 
-const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
-const GOOGLE_ISS: &str = "https://accounts.google.com";
-const DEFAULT_TIMEOUT: u64 = 5;
+const GOOGLE_SA_CERTS_URL: &str = crate::GOOGLE_SA_CERTS_URL;
+const GOOGLE_ISS: &str = crate::GOOGLE_ISS;
+const DEFAULT_TIMEOUT: u64 = crate::DEFAULT_TIMEOUT;
 
 #[derive(Debug, Clone)]
 pub struct Client {
