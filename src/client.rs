@@ -1,5 +1,4 @@
 #![allow(non_upper_case_globals)]
-#![cfg(feature = "blocking")]
 
 use anyhow::bail;
 use lazy_static::lazy_static;
@@ -82,5 +81,17 @@ impl Client {
         let certs: Certs = serde_json::from_str(&certs)?;
 
         Ok(certs.keys)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_id_token() {
+        let client = Client::new("1012916199183-mokbc9qrmssv8e1odemhv723jnaugcfk.apps.googleusercontent.com");
+        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg2OTY5YWVjMzdhNzc4MGYxODgwNzg3NzU5M2JiYmY4Y2Y1ZGU1Y2UiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYmYiOjE2ODI1Mjc0MzQsImF1ZCI6IjEwMTI5MTYxOTkxODMtbW9rYmM5cXJtc3N2OGUxb2RlbWh2NzIzam5hdWdjZmsuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDcxNDk1NjQ0NjU2MDc5Mjc1NjgiLCJlbWFpbCI6Im5ldGlkLmNhb2plbkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXpwIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eFl5cDdLaVh1cEdNU2pReWY5d08xSkNqTl9YV0NyQm1fQWtDR1pMPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwiaWF0IjoxNjgyNTI3NzM0LCJleHAiOjE2ODI1MzEzMzQsImp0aSI6ImEzMWM1MDllOWQ2MWE3MWNiODYxYTYwMzE5OGY4ZWRhMGRjMTgxYjMifQ.vaMGWcLlSym2WVW-YmXAdKkZ4aPcFltlxFyeT6WfSLSXGosqhS9t-_YrCcg-HQjaw_qBEqwdYbD19jvAcFkQqmuYIiqyJJPR9gsyUpqQqvfwY1jq_UQYLkkkepdVf0_N18Pqsj94uj_xTUoPH3u3P2s2PJQwSgJ7j15wCCqBzhiXlUcQMvLdvnUNKbAxDWrTxMELupbApzQhNy5_aiYkDNVsFfV7iU78UQ4VlR5Zhi0aEmYG4827MfY-DVIIveR6NXrzw5yRhcufCxKU4hZBAti6ZhgBqyYlEOSeCGhu55dQzwpyOVpmjnYSmt-_2Ntd3WcEwQ9NuEf3dBblHDBSQQ");
+        dbg!(data);
     }
 }
