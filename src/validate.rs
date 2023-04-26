@@ -2,10 +2,9 @@ use base64::Engine;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use rsa::BigUint;
 use rsa::pkcs1v15::{VerifyingKey};
-use rsa::sha2::{Digest, Sha256};
+use rsa::sha2::Sha256;
 use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
-use rsa::signature::digest::Mac;
 
 use crate::Cert;
 
