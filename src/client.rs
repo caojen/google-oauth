@@ -3,14 +3,12 @@ use lazy_static::lazy_static;
 use crate::{Cert, Certs, GooglePayload, JwtParser};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use base64::Engine;
-use rsa::{BigUint, Pkcs1v15Sign};
-use rsa::pkcs1v15::{SigningKey, VerifyingKey};
+use rsa::{BigUint};
+use rsa::pkcs1v15::{VerifyingKey};
 use rsa::pkcs1v15::Signature;
-use rsa::sha2::{Sha256, Sha512_256};
-use rsa::signature::{DigestVerifier, Verifier};
+use rsa::sha2::{Sha256};
+use rsa::signature::{Verifier};
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
-use rsa::pkcs1::{EncodeRsaPublicKey, LineEnding};
-use rsa::pkcs8::EncodePublicKey;
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
