@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use base64::prelude::{BASE64_URL_SAFE_NO_PAD};
 
+#[derive(Debug)]
 pub struct JwtParser<'a, T> {
     pub parts: Vec<&'a str>,
     pub header: JwtHeader,
@@ -49,9 +50,11 @@ impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
         Ok(sig)
     }
 
-    pub fn hashed_content(&self) -> String {
+    pub fn hashed_content(&self) -> anyhow::Result<Vec<u8>> {
         let signed_content = self.parts[0].to_string() + "." + self.parts[1];
-        sha256::digest(signed_content.as_str())
+        let hexed = sha256::digest(signed_content.as_str());
+
+        Ok(hex::decode(&hexed)?)
     }
 }
 
