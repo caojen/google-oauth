@@ -4,6 +4,7 @@ mod client;
 mod output;
 mod jwt_parser;
 mod certs;
+mod validate;
 
 pub use client::*;
 pub use output::*;

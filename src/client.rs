@@ -4,13 +4,7 @@ use anyhow::bail;
 use lazy_static::lazy_static;
 use crate::{Cert, Certs, GooglePayload, JwtParser};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use base64::Engine;
-use rsa::{BigUint};
-use rsa::pkcs1v15::{VerifyingKey};
-use rsa::pkcs1v15::Signature;
-use rsa::sha2::{Sha256};
-use rsa::signature::{Verifier};
-use base64::prelude::BASE64_URL_SAFE_NO_PAD;
+use crate::validate::validate_rs256;
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -55,38 +49,19 @@ impl Client {
             bail!("id_token: token expired");
         }
 
+        let cert = self.get_cert(parser.header.alg.as_str(), parser.header.kid.as_str())?;
+
         match parser.header.alg.as_str() {
-            "RS256" => self.validate_rs256(
-                parser.header.kid.as_str(),
-                parser.msg().as_str(),
-                parser.sig.as_slice(),
-            )?,
+            "RS256" => validate_rs256(
+                    &cert,
+                    parser.msg().as_str(),
+                    parser.sig.as_slice(),
+                )?,
             "ES256" => bail!("id_token: unimplemented alg: ES256"),
             a => bail!("id_token: expected JWT signed with RS256 or ES256, but found {}", a),
         }
 
         Ok(parser.payload)
-    }
-
-    fn validate_rs256(&self, kid: &str, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
-        let cert = self.get_cert("RS256", kid)?;
-
-        let dn = Self::decode(cert.n.as_ref())?;
-        let de = Self::decode(cert.e.as_ref())?;
-
-        let pk = rsa::RsaPublicKey::new(
-            BigUint::from_bytes_be(dn.as_slice()),
-            BigUint::from_bytes_be(de.as_slice()),
-        )?;
-
-        let verifying_key: VerifyingKey<Sha256> = VerifyingKey::new_with_prefix(pk);
-
-        verifying_key.verify(
-            msg.as_bytes(),
-            &Signature::try_from(sig)?,
-        )?;
-
-        Ok(())
     }
 
     fn get_cert(&self, alg: &str, kid: &str) -> anyhow::Result<Cert> {
@@ -106,11 +81,5 @@ impl Client {
         let certs: Certs = serde_json::from_str(&certs)?;
 
         Ok(certs.keys)
-    }
-
-    fn decode(b64: &str) -> anyhow::Result<Vec<u8>> {
-        let bytes = BASE64_URL_SAFE_NO_PAD.decode(b64)?;
-
-        Ok(bytes)
     }
 }
