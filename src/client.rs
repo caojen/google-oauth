@@ -46,7 +46,6 @@ impl Client {
         }
 
         if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
-            #[cfg(not(test))]
             bail!("id_token: token expired");
         }
 
