@@ -4,10 +4,10 @@ use crate::{Cert, Certs, GooglePayload, JwtParser};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use base64::Engine;
 use rsa::{BigUint, Pkcs1v15Sign};
-use rsa::pkcs1v15::VerifyingKey;
+use rsa::pkcs1v15::{SigningKey, VerifyingKey};
 use rsa::pkcs1v15::Signature;
 use rsa::sha2::{Sha256, Sha512_256};
-use rsa::signature::Verifier;
+use rsa::signature::{DigestVerifier, Verifier};
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use rsa::pkcs1::{EncodeRsaPublicKey, LineEnding};
 use rsa::pkcs8::EncodePublicKey;
@@ -50,8 +50,6 @@ impl Client {
             bail!("id_token: iss = {}, but expects {}", &parser.payload.iss, GOOGLE_ISS);
         }
 
-        dbg!(&parser);
-
         if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
             #[cfg(not(test))]
             bail!("id_token: token expired");
@@ -60,21 +58,17 @@ impl Client {
         match parser.header.alg.as_str() {
             "RS256" => self.validate_rs256(
                 parser.header.kid.as_str(),
-                parser.hashed_content()?.as_slice(),
+                parser.msg().as_str(),
                 parser.sig.as_slice(),
             )?,
-            // "ES256" => self.validate_es256(
-            //     parser.header.kid.as_str(),
-            //     parser.hashed_content().as_str(),
-            //     parser.sig.as_slice(),
-            // )?,
+            "ES256" => bail!("id_token: unimplemented alg: ES256"),
             a => bail!("id_token: expected JWT signed with RS256 or ES256, but found {}", a),
         }
 
         Ok(parser.payload)
     }
 
-    fn validate_rs256(&self, kid: &str, digest: &[u8], sig: &[u8]) -> anyhow::Result<()> {
+    fn validate_rs256(&self, kid: &str, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
         let cert = self.get_cert("RS256", kid)?;
 
         let dn = Self::decode(cert.n.as_ref())?;
@@ -85,17 +79,13 @@ impl Client {
             BigUint::from_bytes_be(de.as_slice()),
         )?;
 
-        let verifying_key: VerifyingKey<Sha256> = VerifyingKey::new(pk);
+        let verifying_key: VerifyingKey<Sha256> = VerifyingKey::new_with_prefix(pk);
 
         verifying_key.verify(
-            digest,
+            msg.as_bytes(),
             &Signature::try_from(sig)?,
         )?;
 
-        Ok(())
-    }
-
-    fn validate_es256(&self, _kid: &str, _hashed_content: &str, _sig: &[u8]) -> anyhow::Result<()> {
         Ok(())
     }
 
@@ -125,35 +115,5 @@ impl Client {
         let bytes = BASE64_URL_SAFE_NO_PAD.decode(b64)?;
 
         Ok(bytes)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn verity() {
-        let client = Client::new("1012916199183-mokbc9qrmssv8e1odemhv723jnaugcfk.apps.googleusercontent.com");
-        let id_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg2OTY5YWVjMzdhNzc4MGYxODgwNzg3NzU5M2JiYmY4Y2Y1ZGU1Y2UiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYmYiOjE2ODI1MTc5OTMsImF1ZCI6IjEwMTI5MTYxOTkxODMtbW9rYmM5cXJtc3N2OGUxb2RlbWh2NzIzam5hdWdjZmsuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDcxNDk1NjQ0NjU2MDc5Mjc1NjgiLCJlbWFpbCI6Im5ldGlkLmNhb2plbkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXpwIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eFl5cDdLaVh1cEdNU2pReWY5d08xSkNqTl9YV0NyQm1fQWtDR1pMPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwiaWF0IjoxNjgyNTE4MjkzLCJleHAiOjE2ODI1MjE4OTMsImp0aSI6IjEzYzBmY2VkMTdhY2FkMWY3MDA1NzFjMTYzYmE3NmUyNzZlNzVhOWMifQ.lPeHAjZFcbDaoLKPyodebfcBu0zw7zengslk7lGJddzQcWyqn1o9RoMPDqw5ou60-rDv73N2sOPNqCCCpzbkPV0CdF4cFfh7mJrH_XwMl5VrcW59Ed4VbdBTN-fUpaRT9of_OzCyHW8zVMww4hWbmdRNKgpXjGS3ztTtjf7D7NOxFcdcemFmA6ILsoTTsubwsrZ_dXL20kSzPS-s--CNEGdbosqqCojMUmPRuZwoKrD43BnZveHW-FodJYxBA-TDQ42Jha5ubFCaTxTIOn-zqTPrFqbMvv14tdn8Q0rE-ZYZrnqkXTt9YEHD2MMh4Auzx4akLdyyslaqMdEH4BdkBg";
-
-        let payload = client.validate(id_token);
-        dbg!(payload);
-    }
-
-    #[test]
-    fn verify_aqab() {
-        let _s = "AQAB";
-        let a = BigUint::parse_bytes(b"65535", 10).unwrap();
-        dbg!(a);
-        let b = BigUint::from_bytes_be(b"A");
-        dbg!(b);
-        let b = BigUint::from_bytes_be(b"AQAB");
-        dbg!(b);
-
-        let c = base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(b"AQAB").unwrap();
-        let c = dbg!(c);
-        let d = BigUint::from_bytes_be(c.as_slice());
-        dbg!(d);
     }
 }

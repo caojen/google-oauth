@@ -50,11 +50,8 @@ impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
         Ok(sig)
     }
 
-    pub fn hashed_content(&self) -> anyhow::Result<Vec<u8>> {
-        let signed_content = self.parts[0].to_string() + "." + self.parts[1];
-        let hexed = sha256::digest(signed_content.as_str());
-
-        Ok(hex::decode(hexed)?)
+    pub fn msg(&self) -> String {
+        self.parts[0].to_string() + "." + self.parts[1]
     }
 }
 
