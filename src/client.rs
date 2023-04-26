@@ -103,9 +103,6 @@ impl Client {
             .timeout(self.timeout)
             .send()?
             .text()?;
-        let certs = dbg!(certs);
-        println!("{}", certs);
-        // let certs: HashMap<String, Vec<HashMap<String, String>>> = serde_json::from_str(&certs)?;
         let certs: Certs = serde_json::from_str(&certs)?;
 
         Ok(certs.keys)

@@ -15,7 +15,6 @@ pub struct JwtParser<'a, T> {
 impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
     pub fn parse(token: &'a str) -> anyhow::Result<JwtParser<'a, T>> {
         let parts: Vec<&'a str> = token.split('.').collect();
-        dbg!(parts[0], parts[1], parts[2]);
 
         if parts.len() != 3 {
             bail!("invalid jwt token, token must have 3 segments, but get {}", parts.len());
