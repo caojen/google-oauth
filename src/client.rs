@@ -34,7 +34,7 @@ impl Client {
         self
     }
 
-    pub fn validate<S: AsRef<str>>(&self, id_token: S) -> anyhow::Result<GooglePayload> {
+    pub fn validate_id_token<S: AsRef<str>>(&self, id_token: S) -> anyhow::Result<GooglePayload> {
         let id_token = id_token.as_ref();
 
         let parser: JwtParser<GooglePayload> = JwtParser::parse(id_token)?;
