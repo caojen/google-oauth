@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![cfg(feature = "blocking")]
 
 use anyhow::bail;
 use lazy_static::lazy_static;
