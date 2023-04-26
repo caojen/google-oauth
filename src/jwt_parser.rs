@@ -54,7 +54,7 @@ impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
         let signed_content = self.parts[0].to_string() + "." + self.parts[1];
         let hexed = sha256::digest(signed_content.as_str());
 
-        Ok(hex::decode(&hexed)?)
+        Ok(hex::decode(hexed)?)
     }
 }
 

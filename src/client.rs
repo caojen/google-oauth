@@ -74,7 +74,7 @@ impl Client {
         Ok(parser.payload)
     }
 
-    fn validate_rs256(&self, kid: &str, hashed_content: &[u8], sig: &[u8]) -> anyhow::Result<()> {
+    fn validate_rs256(&self, kid: &str, digest: &[u8], sig: &[u8]) -> anyhow::Result<()> {
         let cert = self.get_cert("RS256", kid)?;
 
         let dn = Self::decode(cert.n.as_ref())?;
@@ -85,10 +85,10 @@ impl Client {
             BigUint::from_bytes_be(de.as_slice()),
         )?;
 
-        let verifying_key: VerifyingKey<Sha256> = VerifyingKey::from(pk);
+        let verifying_key: VerifyingKey<Sha256> = VerifyingKey::new(pk);
 
         verifying_key.verify(
-            hashed_content,
+            digest,
             &Signature::try_from(sig)?,
         )?;
 
