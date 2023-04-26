@@ -13,6 +13,7 @@ lazy_static! {
 
 const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 const GOOGLE_ISS: &str = "https://accounts.google.com";
+const DEFAULT_TIMEOUT: u64 = 5;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -24,7 +25,7 @@ impl Client {
     pub fn new<S: Into<String>>(client_id: S) -> Self {
         Self {
             client_id: client_id.into(),
-            timeout: Duration::from_secs(5),
+            timeout: Duration::from_secs(DEFAULT_TIMEOUT),
         }
     }
 
