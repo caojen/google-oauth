@@ -1,3 +1,5 @@
+#![allow(non_upper_case_globals)]
+
 use anyhow::bail;
 use lazy_static::lazy_static;
 use crate::{Cert, Certs, GooglePayload, JwtParser};
