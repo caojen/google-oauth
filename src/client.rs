@@ -2,9 +2,9 @@
 
 use anyhow::bail;
 use lazy_static::lazy_static;
-use crate::{Cert, Certs, DEFAULT_TIMEOUT, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
+use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
 use std::time::{Duration};
-use crate::validate::{validate_id_token_info, validate_rs256};
+use crate::validate::{do_validate, validate_id_token_info, validate_rs256};
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -17,9 +17,9 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new<S: Into<String>>(client_id: S) -> Self {
+    pub fn new<S: ToString>(client_id: S) -> Self {
         Self {
-            client_id: client_id.into(),
+            client_id: client_id.to_string(),
             timeout: Duration::from_secs(DEFAULT_TIMEOUT),
         }
     }
@@ -41,15 +41,7 @@ impl Client {
 
         let cert = self.get_cert(parser.header.alg.as_str(), parser.header.kid.as_str())?;
 
-        match parser.header.alg.as_str() {
-            "RS256" => validate_rs256(
-                    &cert,
-                    parser.msg().as_str(),
-                    parser.sig.as_slice(),
-                )?,
-            "ES256" => bail!("id_token: unimplemented alg: ES256"),
-            a => bail!("id_token: expected JWT signed with RS256 or ES256, but found {}", a),
-        }
+        do_validate(&cert, &parser)?;
 
         Ok(parser.payload)
     }
@@ -57,10 +49,7 @@ impl Client {
     fn get_cert(&self, alg: &str, kid: &str) -> anyhow::Result<Cert> {
         let certs = self.get_certs_from_server()?;
 
-        match certs.iter().find(|cert| cert.alg == alg && cert.kid == kid) {
-            Some(cert) => Ok(cert.clone()),
-            None => bail!("alg {}, kid = {} not found in google certs", alg, kid),
-        }
+        find_cert(certs, alg, kid)
     }
 
     fn get_certs_from_server(&self) -> anyhow::Result<Vec<Cert>> {

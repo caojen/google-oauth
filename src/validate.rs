@@ -30,6 +30,20 @@ pub fn validate_id_token_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<Go
     Ok(())
 }
 
+pub fn do_validate(cert: &Cert, parser: &JwtParser<GooglePayload>) -> anyhow::Result<()> {
+    match parser.header.alg.as_str() {
+        "RS256" => validate_rs256(
+            &cert,
+            parser.msg().as_str(),
+            parser.sig.as_slice(),
+        )?,
+        "ES256" => bail!("id_token: unimplemented alg: ES256"),
+        a => bail!("id_token: expected JWT signed with RS256 or ES256, but found {}", a),
+    };
+
+    Ok(())
+}
+
 fn decode<T: AsRef<[u8]>>(b64url: T) -> anyhow::Result<Vec<u8>> {
     let bytes = BASE64_URL_SAFE_NO_PAD.decode(b64url)?;
 
