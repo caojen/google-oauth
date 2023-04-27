@@ -25,7 +25,9 @@ impl Client {
     }
 
     pub fn timeout(mut self, d: Duration) -> Self {
-        self.timeout = d;
+        if d.as_nanos() != 0 {
+            self.timeout = d;
+        }
 
         self
     }
