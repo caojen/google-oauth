@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+use anyhow::bail;
 use base64::Engine;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use rsa::BigUint;
@@ -6,7 +8,27 @@ use rsa::sha2::Sha256;
 use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
 
-use crate::Cert;
+use crate::{Cert, GOOGLE_ISS, GooglePayload, JwtParser};
+
+pub fn validate_id_token_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<GooglePayload>)
+    -> anyhow::Result<()>
+{
+    let client_id = client_id.as_ref();
+    if !client_id.is_empty() && client_id != parser.payload.aud.as_str() {
+        bail!("id_token: audience provided does not match aud claim in the jwt");
+    }
+
+    if parser.payload.iss != GOOGLE_ISS {
+        bail!("id_token: iss = {}, but expects {}", &parser.payload.iss, GOOGLE_ISS);
+    }
+
+    if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
+        #[cfg(not(test))]
+        bail!("id_token: token expired");
+    }
+
+    Ok(())
+}
 
 fn decode<T: AsRef<[u8]>>(b64url: T) -> anyhow::Result<Vec<u8>> {
     let bytes = BASE64_URL_SAFE_NO_PAD.decode(b64url)?;

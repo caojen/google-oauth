@@ -2,17 +2,13 @@
 
 use anyhow::bail;
 use lazy_static::lazy_static;
-use crate::{Cert, Certs, GooglePayload, JwtParser};
+use crate::{Cert, Certs, DEFAULT_TIMEOUT, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use crate::validate::validate_rs256;
+use crate::validate::{validate_id_token_info, validate_rs256};
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
-
-const GOOGLE_SA_CERTS_URL: &str = crate::GOOGLE_SA_CERTS_URL;
-const GOOGLE_ISS: &str = crate::GOOGLE_ISS;
-const DEFAULT_TIMEOUT: u64 = crate::DEFAULT_TIMEOUT;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -39,16 +35,7 @@ impl Client {
 
         let parser: JwtParser<GooglePayload> = JwtParser::parse(id_token)?;
 
-        if !self.client_id.is_empty() && self.client_id != parser.payload.aud {
-            #[cfg(not(test))]
-            bail!("id_token: audience provided does not match aud claim in the jwt");
-        } else if parser.payload.iss != GOOGLE_ISS {
-            bail!("id_token: iss = {}, but expects {}", &parser.payload.iss, GOOGLE_ISS);
-        }
-
-        if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
-            bail!("id_token: token expired");
-        }
+        validate_id_token_info(&self.client_id, &parser)?;
 
         let cert = self.get_cert(parser.header.alg.as_str(), parser.header.kid.as_str())?;
 
