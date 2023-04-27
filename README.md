@@ -42,7 +42,7 @@ fn main() {
     // now we got the data
     // usually we use the `sub` as a unique id for the user
     
-    println!("user with sub: {} login!", data.sub.clone());
+    println!("user with sub: {} login!", data.unwrap().sub);
 }
 ```
 
@@ -62,7 +62,6 @@ async fn main() {
     let client = AsyncClient::new(client_id);
     
     let data = client.validate_id_token(id_token).await;
-    
     match &data {
         Ok(data) => println!("ok: {:?}", data),
         Err(e) => println!("{:?}", e),
@@ -71,6 +70,6 @@ async fn main() {
     // now we got the data
     // usually we use the `sub` as a unique id for the user
     
-    println!("user with sub: {} login!", data.sub.clone());
+    println!("user with sub: {} login!", data.unwrap().sub);
 }
 ```
