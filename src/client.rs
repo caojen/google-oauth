@@ -9,6 +9,7 @@ lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
 
+/// Client is a blocking client to do verification.
 #[derive(Debug, Clone)]
 pub struct Client {
     client_id: String,
@@ -16,6 +17,7 @@ pub struct Client {
 }
 
 impl Client {
+    /// Create a new client.
     pub fn new<S: ToString>(client_id: S) -> Self {
         Self {
             client_id: client_id.to_string(),
@@ -23,6 +25,8 @@ impl Client {
         }
     }
 
+    /// Set the timeout (used in fetching google certs).
+    /// Default timeout is 5 seconds. Zero timeout will be ignored.
     pub fn timeout(mut self, d: Duration) -> Self {
         if d.as_nanos() != 0 {
             self.timeout = d;
@@ -31,6 +35,7 @@ impl Client {
         self
     }
 
+    /// Do verification with `id_token`. If succeed, return the user data.
     pub fn validate_id_token<S: AsRef<str>>(&self, id_token: S) -> anyhow::Result<GooglePayload> {
         let id_token = id_token.as_ref();
 

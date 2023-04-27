@@ -9,6 +9,7 @@ lazy_static! {
     static ref ca: reqwest::Client = reqwest::Client::new();
 }
 
+/// AsyncClient is an async client to do verification.
 #[derive(Debug, Clone)]
 pub struct AsyncClient {
     client_id: String,
@@ -16,6 +17,7 @@ pub struct AsyncClient {
 }
 
 impl AsyncClient {
+    /// Create a new client.
     pub fn new<S: ToString>(client_id: S) -> Self {
         Self {
             client_id: client_id.to_string(),
@@ -23,6 +25,8 @@ impl AsyncClient {
         }
     }
 
+    /// Set the timeout (used in fetching google certs).
+    /// Default timeout is 5 seconds. Zero timeout will be ignored.
     pub fn timeout(mut self, d: Duration) -> Self {
         if d.as_nanos() != 0 {
             self.timeout = d;
@@ -31,6 +35,7 @@ impl AsyncClient {
         self
     }
 
+    /// Do verification with `id_token`. If succeed, return the user data.
     pub async fn validate_id_token<S>(&self, id_token: S) -> anyhow::Result<GooglePayload>
         where S: AsRef<str>
     {
