@@ -1,5 +1,7 @@
 # Google-Oauth
 
+> WIP: the project is still WORKING IN PROGRESS
+
 ## Description
 `Google-Oauth` is a server-side verification library for Google oauth2.
 
