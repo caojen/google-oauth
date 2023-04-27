@@ -3,7 +3,7 @@
 use anyhow::bail;
 use lazy_static::lazy_static;
 use crate::{Cert, Certs, DEFAULT_TIMEOUT, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use crate::validate::{validate_id_token_info, validate_rs256};
 
 lazy_static! {
