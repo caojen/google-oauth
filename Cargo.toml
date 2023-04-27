@@ -3,7 +3,14 @@ name = "google-oauth"
 version = "1.0.1"
 edition = "2021"
 description = "Google oauth server-side client"
-license = "MIT OR Apache-2.0"
+license = "MIT"
+repository = "https://github.com/caojen/google-oauth"
+resolver = "1"
+keywords = [
+    "google",
+    "oauth2"
+]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
