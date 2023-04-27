@@ -1,8 +1,9 @@
+#![allow(non_upper_case_globals)]
+
 use std::time::Duration;
-use anyhow::bail;
 use lazy_static::lazy_static;
 use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
-use crate::validate::{do_validate, validate_id_token_info, validate_rs256};
+use crate::validate::{do_validate, validate_id_token_info};
 
 lazy_static! {
     static ref ca: reqwest::Client = reqwest::Client::new();
