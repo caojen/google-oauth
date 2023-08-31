@@ -33,7 +33,7 @@ pub fn validate_id_token_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<Go
 pub fn do_validate(cert: &Cert, parser: &JwtParser<GooglePayload>) -> anyhow::Result<()> {
     match parser.header.alg.as_str() {
         "RS256" => validate_rs256(
-            &cert,
+            cert,
             parser.msg().as_str(),
             parser.sig.as_slice(),
         )?,

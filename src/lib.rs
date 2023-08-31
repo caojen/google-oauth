@@ -62,5 +62,5 @@ pub use jwt_parser::*;
 pub use certs::*;
 
 const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
-const GOOGLE_ISS: [&'static str; 2] = ["https://accounts.google.com", "accounts.google.com"];
+const GOOGLE_ISS: [&str; 2] = ["https://accounts.google.com", "accounts.google.com"];
 const DEFAULT_TIMEOUT: u64 = 5u64;
