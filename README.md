@@ -73,3 +73,13 @@ async fn main() {
     println!("user with sub: {} login!", data.unwrap().sub);
 }
 ```
+
+### Algorithm Support
+Currently, this lib only supports `RS256`.
+
+It seems that Google may use `ES256` as the hash algorithm, but I couldn't find any website example, so I left it `unimplemented` and return an `Err()` when validating.
+
+If you do need `ES256`, just let me know through creating a new Gihub Issue.
+
+- [x] RS256
+- [ ] ES256
