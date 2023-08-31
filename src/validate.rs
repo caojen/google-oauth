@@ -18,8 +18,8 @@ pub fn validate_id_token_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<Go
         bail!("id_token: audience provided does not match aud claim in the jwt");
     }
 
-    if parser.payload.iss != GOOGLE_ISS {
-        bail!("id_token: iss = {}, but expects {}", &parser.payload.iss, GOOGLE_ISS);
+    if !GOOGLE_ISS.contains(&(parser.payload.iss.as_str())) {
+        bail!("id_token: iss = {}, but expects one of {:?}", &parser.payload.iss, GOOGLE_ISS)
     }
 
     if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
