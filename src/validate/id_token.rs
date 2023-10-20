@@ -10,8 +10,8 @@ use rsa::pkcs1v15::Signature;
 
 use crate::{Cert, GOOGLE_ISS, GooglePayload, JwtParser};
 
-pub fn validate_id_token_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<GooglePayload>)
-    -> anyhow::Result<()>
+pub fn validate_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<GooglePayload>)
+                                             -> anyhow::Result<()>
 {
     let client_id = client_id.as_ref();
     if !client_id.is_empty() && client_id != parser.payload.aud.as_str() {

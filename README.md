@@ -3,12 +3,12 @@
 ## Description
 `Google-Oauth` is a server-side verification library for Google oauth2.
 
-`Google-Oauth` can help you to verify `id_token` which is generated from Google.
+`Google-Oauth` can help you to verify `id_token` or `access_token` which is generated from Google.
 
 This lib provides `blocking` and `async` API for your convince. If you are using `async`, note that 
 `Google-Oauth` doesn't provide any async runtime (like `tokio` or `async-std`).
 
-## Simple Usage
+## Simple Usage of `id_token`
 
 Suppose you've got an `id_token` from Google. `id_token` is a JWT which looks like `eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg2OTY5YWVjMzdhNzc4MGYxODgwNz...`.
 
@@ -46,7 +46,7 @@ fn main() {
 }
 ```
 
-## AsyncClient
+### AsyncClient
 You can use `AsyncClient` with an async runtime.
 
 ```rust
@@ -79,7 +79,11 @@ Currently, this lib only supports `RS256`.
 
 It seems that Google may use `ES256` as the hash algorithm, but I couldn't find any website example, so I left it `unimplemented` and return an `Err()` when validating.
 
-If you do need `ES256`, just let me know through creating a new Gihub Issue.
+If you do need `ES256`, just let me know through creating a new Github Issue.
 
 - [x] RS256
 - [ ] ES256
+
+## Simple Usage of `access_token`
+
+Please use api `validate_access_token` instead of `validate_id_token`.

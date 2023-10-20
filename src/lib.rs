@@ -10,7 +10,7 @@
 //! google-oauth = "1"
 //! ```
 //!
-//! # Usage
+//! # Usage of `id_token`
 //! The Library provides API to verify `id_token` from Google.
 //!
 //! ## Example: Blocking
@@ -47,6 +47,11 @@
 //!     println!("Hello, user (sub = {}) now is online", sub);
 //! }
 //! ```
+//!
+//! # Usage of `access_token`
+//!
+//! Please use api [`Client::validate_access_token`] or [`AsyncClient::validate_access_token`] instead.
+//!
 
 mod client;
 mod async_client;
@@ -64,3 +69,5 @@ pub use certs::*;
 const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 const GOOGLE_ISS: [&str; 2] = ["https://accounts.google.com", "accounts.google.com"];
 const DEFAULT_TIMEOUT: u64 = 5u64;
+
+const GOOGLE_OAUTH_V3_USER_INFO_API: &str = "https://www.googleapis.com/oauth2/v3/userinfo";
