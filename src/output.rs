@@ -45,5 +45,5 @@ pub struct GoogleAccessTokenPayload {
     pub locale: Option<String>,
     pub given_name: Option<String>,
     pub email: Option<String>,
-    pub email_verified: Option<String>,
+    pub email_verified: Option<bool>,
 }
