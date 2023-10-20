@@ -10,7 +10,7 @@
 //! google-oauth = "1"
 //! ```
 //!
-//! # Usage
+//! # Usage of `id_token`
 //! The Library provides API to verify `id_token` from Google.
 //!
 //! ## Example: Blocking
@@ -47,6 +47,11 @@
 //!     println!("Hello, user (sub = {}) now is online", sub);
 //! }
 //! ```
+//!
+//! # Usage of `access_token`
+//!
+//! Please use api [`Client::validate_access_token`] or [`AsyncClient::validate_access_token`] instead.
+//!
 
 mod client;
 mod async_client;
