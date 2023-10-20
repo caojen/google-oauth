@@ -2,8 +2,8 @@
 
 use std::time::Duration;
 use lazy_static::lazy_static;
-use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
-use crate::validate::{id_token, access_token};
+use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, JwtParser};
+use crate::validate::id_token;
 
 lazy_static! {
     static ref ca: reqwest::Client = reqwest::Client::new();
@@ -69,6 +69,24 @@ impl AsyncClient {
         let certs: Certs = serde_json::from_str(&certs)?;
 
         Ok(certs.keys)
+    }
+
+    /// Try to validate access token. If succeed, return the user info.
+    pub async fn validate_access_token<S>(&self, token: S) -> anyhow::Result<GoogleAccessTokenPayload>
+        where S: AsRef<str>
+    {
+        let token = token.as_ref();
+
+        let info = ca.get(format!("{}?access_token={}", GOOGLE_OAUTH_V3_USER_INFO_API, token))
+            .timeout(self.timeout)
+            .send()
+            .await?
+            .text()
+            .await?;
+
+        let payload = serde_json::from_str(&info)?;
+
+        Ok(payload)
     }
 }
 

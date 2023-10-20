@@ -1,9 +1,9 @@
 #![allow(non_upper_case_globals)]
 
 use lazy_static::lazy_static;
-use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, JwtParser};
+use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, JwtParser};
 use std::time::{Duration};
-use crate::validate::{id_token, access_token};
+use crate::validate::id_token;
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -74,7 +74,14 @@ impl Client {
     {
         let token = token.as_ref();
 
-        todo!()
+        let info = cb.get(format!("{}?access_token={}", GOOGLE_OAUTH_V3_USER_INFO_API, token))
+            .timeout(self.timeout)
+            .send()?
+            .text()?;
+
+        let payload = serde_json::from_str(&info)?;
+
+        Ok(payload)
     }
 }
 
