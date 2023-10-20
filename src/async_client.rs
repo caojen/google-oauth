@@ -101,4 +101,13 @@ mod tests {
 
         data.unwrap();
     }
+
+    #[tokio::test]
+    async fn verify_access_token() {
+        let client = AsyncClient::new("525360879715-3kfn0tge3t1nouvk9ol5jgaiv2rtp0s9.apps.googleusercontent.com");
+        let token = "ya29.a0AfB_byCH_ODaYF16gXLDn7yO6M6En58FEyBfWeentCVJ664dy6ASRYDfVcYoN4qDDjWwFl7_9R6deSPndy8ZZf1sO5X078pqY5oH4bDbydc-v3Ulux_LeIhWZQQybfjJKdFGjmLaWGxOfYaiKhJGOFFzxI41XuX8FX9waCgYKAfMSARISFQGOcNnCqo7b7NhcUZjGUK6B9su5vw0171";
+
+        let payload = client.validate_access_token(token).await;
+        payload.unwrap();
+    }
 }
