@@ -3,7 +3,7 @@
 use std::time::Duration;
 use lazy_static::lazy_static;
 use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_SA_CERTS_URL, GooglePayload, JwtParser};
-use crate::validate::{do_validate, validate_id_token_info};
+use crate::validate::{id_token, access_token};
 
 lazy_static! {
     static ref ca: reqwest::Client = reqwest::Client::new();
@@ -36,18 +36,18 @@ impl AsyncClient {
     }
 
     /// Do verification with `id_token`. If succeed, return the user data.
-    pub async fn validate_id_token<S>(&self, id_token: S) -> anyhow::Result<GooglePayload>
+    pub async fn validate_id_token<S>(&self, token: S) -> anyhow::Result<GooglePayload>
         where S: AsRef<str>
     {
-        let id_token = id_token.as_ref();
+        let token = token.as_ref();
 
-        let parser: JwtParser<GooglePayload> = JwtParser::parse(id_token)?;
+        let parser: JwtParser<GooglePayload> = JwtParser::parse(token)?;
 
-        validate_id_token_info(&self.client_id, &parser)?;
+        id_token::validate_info(&self.client_id, &parser)?;
 
         let cert = self.get_cert(parser.header.alg.as_str(), parser.header.kid.as_str()).await?;
 
-        do_validate(&cert, &parser)?;
+        id_token::do_validate(&cert, &parser)?;
 
         Ok(parser.payload)
     }

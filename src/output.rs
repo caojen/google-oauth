@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 /// `GooglePayload` is the user data from google.
+///
 /// see https://developers.google.com/identity/openid-connect/openid-connect for more info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -25,7 +26,24 @@ pub struct GooglePayload {
     pub nonce: Option<String>,
     pub picture: Option<String>,
 
-    // These fields doesn't list in document, but it exists
+    // These fields not list in document, but it may exist
     pub nbf: Option<u64>,
     pub jti: Option<String>,
+}
+
+/// `GoogleAccessTokenPayload` is the user data when using access token
+///
+/// reference: https://stackoverflow.com/questions/16501895/how-do-i-get-user-profile-using-google-access-token
+///
+/// reference: https://gist.github.com/evanj/e415d808dbb6c2a0bd866cd9d17ef5aa
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct GoogleAccessTokenPayload {
+    pub sub: String,
+    pub picture: Option<String>,
+    pub name: Option<String>,
+    pub locale: Option<String>,
+    pub given_name: Option<String>,
+    pub email: Option<String>,
+    pub email_verified: Option<String>,
 }
