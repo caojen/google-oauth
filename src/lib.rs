@@ -3,7 +3,7 @@
 //! A server-side google oauth2 verification library for rust.
 //!
 //! # Installation
-//! This library is hosted on [crates.io](https://crates.io/crates/mysql_async/)
+//! This library is hosted on [crates.io](https://crates.io/crates/google-oauth/)
 //!
 //! ```toml
 //! [dependencies]
