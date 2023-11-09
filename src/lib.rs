@@ -81,7 +81,7 @@
 //!
 //! Warning: the result of `access_token` is different from the result of `id_token`, although they have a same field `sub`.
 //!
-//! > Full example, please view ./example/async_client/
+//! > For full example, please view ./example/async_client/
 //!
 //! ## Algorithm Supported
 //! For validating `id_token`, Google may use these two kinds of hash algorithm to generate JWTs:
@@ -117,7 +117,7 @@
 //! }
 //! ```
 //!
-//! > Full example, please view ./examples/blocking/
+//! > For full example, please view ./examples/blocking/
 //!
 //! ## WebAssembly (wasm)
 //! `Google-Oauth` supports wasm, feature `wasm` is required.
