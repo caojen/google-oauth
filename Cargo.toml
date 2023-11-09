@@ -1,6 +1,6 @@
 [package]
 name = "google-oauth"
-version = "1.4.1"
+version = "1.5.0"
 edition = "2021"
 description = "Google oauth server-side client"
 license = "MIT"
