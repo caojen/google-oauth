@@ -130,8 +130,6 @@ You can build this library with ``wasm-pack build --features wasm``. (`cargo ins
 
 If you need to import `wasm` into your project, you can use `google_oauth::Client` to run async functions.
 
-> Full example, please view ./examples/wasm/
-
 ## Features
 + `default`: enable `AsyncClient`.
 + `blocking`: enable `Client`.
