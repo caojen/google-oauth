@@ -1,4 +1,3 @@
-//!
 //! # Google-Oauth
 //!
 //! ## Description
