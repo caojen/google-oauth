@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-google-oauth = "1"
-tokio = { version = "1.27.0", features = ["macros"] }
+google-oauth = { path = "../.." }
+tokio = { version = "1.33.0", features = ["full"] }
