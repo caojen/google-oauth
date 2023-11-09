@@ -1,9 +1,17 @@
+use std::time;
+use std::time::Instant;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Certs {
-    pub keys: Vec<Cert>,
+    keys: Vec<Cert>,
+
+    /// MUST refresh certs from Google server again, when one of following is matched:
+    /// 1. cache_until is None,
+    /// 2. if let Some(time) = cache_until, current time > time
+    #[serde(skip)]
+    cache_until: Option<time::Instant>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -15,9 +23,29 @@ pub struct Cert {
     pub n: String,
 }
 
-pub fn find_cert(certs: Vec<Cert>, alg: &str, kid: &str) -> anyhow::Result<Cert> {
-    match certs.iter().find(|cert| cert.alg == alg && cert.kid == kid) {
-        Some(cert) => Ok(cert.clone()),
-        None => bail!("alg {}, kid = {} not found in google certs", alg, kid),
+impl Certs {
+    pub fn find_cert<T: AsRef<str>>(&self, alg: T, kid: T) -> anyhow::Result<Cert> {
+        let alg = alg.as_ref();
+        let kid = kid.as_ref();
+
+        match self.keys.iter().find(|cert| cert.alg == alg && cert.kid == kid) {
+            Some(cert ) => Ok(cert.clone()),
+            None => bail!("alg {}, kid = {} not found in google certs", alg, kid),
+        }
+    }
+
+    #[inline]
+    pub fn set_cache_until<T>(&mut self, cache_until: T)
+        where T: Into<Option<Instant>>
+    {
+        self.cache_until = cache_until.into();
+    }
+
+    #[inline]
+    pub fn need_refresh(&self) -> bool {
+        self
+            .cache_until
+            .map(|until| until <= Instant::now())
+            .unwrap_or(true)
     }
 }

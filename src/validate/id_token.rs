@@ -8,7 +8,9 @@ use rsa::sha2::Sha256;
 use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
 
-use crate::{Cert, GOOGLE_ISS, GooglePayload, JwtParser};
+use crate::{GOOGLE_ISS, GooglePayload};
+use crate::certs::Cert;
+use crate::jwt_parser::JwtParser;
 
 pub fn validate_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<GooglePayload>)
                                              -> anyhow::Result<()>

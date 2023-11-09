@@ -1,8 +1,13 @@
 #![allow(non_upper_case_globals)]
 
-use std::time::Duration;
+use std::ops::Add;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
-use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, JwtParser};
+use tokio::sync::RwLock;
+use crate::{DEFAULT_TIMEOUT, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
+use crate::certs::{Cert, Certs};
+use crate::jwt_parser::JwtParser;
 use crate::validate::id_token;
 
 lazy_static! {
@@ -14,14 +19,16 @@ lazy_static! {
 pub struct AsyncClient {
     client_id: String,
     timeout: Duration,
+    cached_certs: Arc<RwLock<Certs>>,
 }
 
 impl AsyncClient {
-    /// Create a new client.
+    /// Create a new async client.
     pub fn new<S: ToString>(client_id: S) -> Self {
         Self {
             client_id: client_id.to_string(),
             timeout: Duration::from_secs(DEFAULT_TIMEOUT),
+            cached_certs: Arc::default(),
         }
     }
 
@@ -53,22 +60,34 @@ impl AsyncClient {
     }
 
     async fn get_cert(&self, alg: &str, kid: &str) -> anyhow::Result<Cert> {
-        let certs = self.get_certs_from_server().await?;
+        {
+            let cached_certs = self.cached_certs.read().await;
+            if !cached_certs.need_refresh() {
+                return cached_certs.find_cert(alg, kid);
+            }
+        }
 
-        find_cert(certs, alg, kid)
-    }
+        let mut cached_certs = self.cached_certs.write().await;
 
-    async fn get_certs_from_server(&self) -> anyhow::Result<Vec<Cert>> {
-        let certs = ca.get(GOOGLE_SA_CERTS_URL)
+        // refresh certs here...
+        let resp = ca.get(GOOGLE_SA_CERTS_URL)
             .timeout(self.timeout)
             .send()
-            .await?
-            .text()
             .await?;
 
-        let certs: Certs = serde_json::from_str(&certs)?;
+        // parse the response header `age` and `max-age`.
+        let age = utils::parse_age_from_async_resp(&resp);
+        let max_age: u64 = utils::parse_max_age_from_async_resp(&resp);
 
-        Ok(certs.keys)
+        let text = resp.text().await?;
+        *cached_certs = serde_json::from_str(&text)?;
+
+        let cached_age = if age >= max_age { 0 } else { max_age - age };
+        cached_certs.set_cache_until(
+            Instant::now().add(Duration::from_secs(cached_age))
+        );
+
+        cached_certs.find_cert(alg, kid)
     }
 
     /// Try to validate access token. If succeed, return the user info.
