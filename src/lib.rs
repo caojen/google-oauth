@@ -80,6 +80,8 @@ mod utils;
 pub use client::*;
 #[cfg(not(feature = "wasm"))]
 pub use async_client::*;
+#[cfg(not(feature = "wasm"))]
+pub use certs::*;
 pub use output::*;
 
 #[cfg(feature = "wasm")]
