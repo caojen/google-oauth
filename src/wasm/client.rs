@@ -77,7 +77,7 @@ impl Client {
         *cached_certs = serde_json::from_str(&text)?;
         cached_certs.set_cache_until((time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_secs() + max_age) as u32);
 
-        return match cached_certs.find_cert(alg, kid) {
+        match cached_certs.find_cert(alg, kid) {
             Ok(cert) => Ok(cert),
             Err(e) => bail!("{}", e),
         }
