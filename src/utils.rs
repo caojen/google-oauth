@@ -15,10 +15,10 @@ fn parse_max_age_from_header(val: Option<&HeaderValue>) -> u64 {
         Some(val) => val
             .to_str()
             .unwrap_or("")
-            .split(",")
+            .split(',')
             .map(|part| part.trim().to_lowercase())
             .find(|part| part.starts_with("max-age"))
-            .map(|max_age| max_age.splitn(2, "=").last().unwrap_or("0").parse().unwrap_or_default())
+            .map(|max_age| max_age.splitn(2, '=').last().unwrap_or("0").parse().unwrap_or_default())
             .unwrap_or_default(),
         None => 0,
     }
