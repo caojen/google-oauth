@@ -29,7 +29,7 @@
 //!     let data = client.validate_id_token("The id_token you want to validate").await.unwrap();
 //!
 //!     // it `unwrap()` is ok, we get the data ...
-//!     println!("Hello, user (sub = {}) now is online", sub);
+//!     println!("Hello, user (sub = {}) now is online", data.sub);
 //! }
 //! ```
 //!
