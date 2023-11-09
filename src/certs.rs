@@ -1,6 +1,6 @@
-use std::time;
 use std::time::Instant;
 use anyhow::bail;
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -11,7 +11,7 @@ pub struct Certs {
     /// 1. cache_until is None,
     /// 2. if let Some(time) = cache_until, current time > time
     #[serde(skip)]
-    cache_until: Option<time::Instant>,
+    cache_until: Option<Instant>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,7 +38,10 @@ impl Certs {
     pub fn set_cache_until<T>(&mut self, cache_until: T)
         where T: Into<Option<Instant>>
     {
-        self.cache_until = cache_until.into();
+        let cache_until = cache_until.into();
+
+        debug!("set cache until to {:?}", cache_until);
+        self.cache_until = cache_until;
     }
 
     #[inline]
