@@ -3,7 +3,7 @@ use anyhow::bail;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Certs {
     keys: Vec<Cert>,
 
