@@ -2,7 +2,6 @@
 
 use std::ops::Add;
 use std::sync::Arc;
-use std::time;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use log::debug;
