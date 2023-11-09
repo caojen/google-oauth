@@ -13,21 +13,6 @@
 //! # Usage of `id_token`
 //! The Library provides API to verify `id_token` from Google.
 //!
-//! ## Example: Blocking
-//! ```rust
-//! // With blocking client, we don't need async runtime.
-//! use google_oauth::Client; // This is a blocking client
-//!
-//! let client_id = "The client_id generated from google...";
-//! let client = Client::new(client_id); // now we get this.
-//!
-//! let data = client.validate_id_token("The id_token you want to validate").unwrap();
-//!
-//! // if ok, we get the data...
-//! let sub = data.sub.as_str();
-//! println!("Hello, user (sub = {}) now is online", sub);
-//! ```
-//!
 //! ## Example: Async
 //! ```rust
 //! // When you use async client, remember to add a async runtime (e.g, `tokio` or `async_std`)
@@ -46,6 +31,29 @@
 //!     // it `unwrap()` is ok, we get the data ...
 //!     println!("Hello, user (sub = {}) now is online", sub);
 //! }
+//! ```
+//!
+//! ## Example: Blocking
+//!
+//! Note: if you want to use blocking client, you need to enable `blocking` feature:
+//! > By default, `blocking` feature is disabled.
+//! ```toml
+//! [dependencies]
+//! google-oauth = { version = "1", features = "blocking" }
+//! ```
+//!
+//! ```rust
+//! // With blocking client, we don't need async runtime.
+//! use google_oauth::Client; // This is a blocking client
+//!
+//! let client_id = "The client_id generated from google...";
+//! let client = Client::new(client_id); // now we get this.
+//!
+//! let data = client.validate_id_token("The id_token you want to validate").unwrap();
+//!
+//! // if ok, we get the data...
+//! let sub = data.sub.as_str();
+//! println!("Hello, user (sub = {}) now is online", sub);
 //! ```
 //!
 //! # Usage of `access_token`
