@@ -1,64 +1,140 @@
-//! Google-Oauth
 //!
-//! A server-side google oauth2 verification library for rust.
+//! # Google-Oauth
 //!
-//! # Installation
-//! This library is hosted on [crates.io](https://crates.io/crates/google-oauth/)
+//! ## Description
+//! `Google-Oauth` is a server-side verification library for Google oauth2.
+//!
+//! `Google-Oauth` can help you to verify `id_token` or `access_token` which is generated from Google.
+//!
+//! ## Usage (async)
+//!
+//! ### 1. Setup
+//! To import `Google-Oauth` to your project, please add this line into your `Cargo.toml`.
 //!
 //! ```toml
 //! [dependencies]
-//! google-oauth = "1"
+//! google-oauth = { version = "1" }
 //! ```
 //!
-//! # Usage of `id_token`
-//! The Library provides API to verify `id_token` from Google.
+//! If you decided to use `async` function, please select an `async` runtime. Here are some options for you:
+//! 1. [tokio](https://github.com/tokio-rs/tokio)
+//! 2. [async-std](https://github.com/async-rs/async-std)
+//! 3. [actix-web](https://github.com/actix/actix-web)
 //!
-//! ## Example: Async
+//! We use [tokio](https://github.com/tokio-rs/tokio) in our example, and refactor our main function like this:
 //! ```rust
-//! // When you use async client, remember to add a async runtime (e.g, `tokio` or `async_std`)
-//! use google_oauth::AsyncClient; // This is a async client
+//! #[tokio::main]
+//! // #[async_std::main] // when you use [async-std]
+//! // #[actix_web::main] // when you use [actix-web]
+//! async fn main() {}
+//! ```
 //!
-//! // It works just like the blocking client, excepts the verification step.
+//! ### 2. Do Verification (`id_token`)
+//!
+//! You can get your `client_id` from Google Admin Console (or somewhere else), and an `id_token` has been provided from
+//! your user. They are all `string-like`. Use the following code to do verification:
+//! ```rust
+//! use google_oauth::AsyncClient;
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let client_id = "...";
+//!     let client_id = "your client id";
+//!     let id_token = "the id_token";
+//!
 //!     let client = AsyncClient::new(client_id);
+//!     /// or, if you want to set the default timeout for fetching certificates from Google, e.g, 30 seconds, you can:
+//!     /// ```rust
+//!     /// let client = AsyncClient::new(client_id).timeout(time::Duration::from_sec(30));
+//!     /// ```
 //!
-//!     /// note: use `await`
-//!     let data = client.validate_id_token("The id_token you want to validate").await.unwrap();
+//!     let payload = client.validate_id_token(id_token).await.unwrap(); // In production, remember to handle this error.
 //!
-//!     // it `unwrap()` is ok, we get the data ...
-//!     println!("Hello, user (sub = {}) now is online", data.sub);
+//!     // When we get the payload, that mean the id_token is valid.
+//!     // Usually we use `sub` as the identifier for our user...
+//!     println!("Hello, I am {}", &payload.sub);
 //! }
 //! ```
 //!
-//! ## Example: Blocking
+//! ### 3. Do Verification (`AccessToken`)
 //!
-//! Note: if you want to use blocking client, you need to enable `blocking` feature:
-//! > By default, `blocking` feature is disabled.
-//! ```toml
-//! [dependencies]
-//! google-oauth = { version = "1", features = "blocking" }
-//! ```
+//! Sometimes, Google will return an `access_token` instead of `id_token`. `Google-Oauth` still provides API for validate
+//! `access_token` from Google.
+//!
+//! Note: when validating `access_token`, we don't matter the `client_id`. So if you just need to validate `access_token`,
+//! you can simply pass an empty `client_id`, just like this:
 //!
 //! ```rust
-//! // With blocking client, we don't need async runtime.
-//! use google_oauth::Client; // This is a blocking client
+//! use google_oauth::AsyncClient;
 //!
-//! let client_id = "The client_id generated from google...";
-//! let client = Client::new(client_id); // now we get this.
+//! #[tokio::main]
+//! async fn main() {
+//!     let access_token = "the access_token";
 //!
-//! let data = client.validate_id_token("The id_token you want to validate").unwrap();
+//!     let client = AsyncClient::new("");
 //!
-//! // if ok, we get the data...
-//! let sub = data.sub.as_str();
-//! println!("Hello, user (sub = {}) now is online", sub);
+//!     let payload = client.validate_access_token(access_token).await.unwrap(); // In production, remember to handle this error.
+//!
+//!     // When we get the payload, that mean the id_token is valid.
+//!     // Usually we use `sub` as the identifier for our user...
+//!     println!("Hello, I am {}", &payload.sub);
+//! }
 //! ```
 //!
-//! # Usage of `access_token`
+//! Warning: the result of `access_token` is different from the result of `id_token`, although they have a same field `sub`.
 //!
-//! Please use api [`Client::validate_access_token`] or [`AsyncClient::validate_access_token`] instead.
+//! > Full example, please view ./example/async_client/
+//!
+//! ## Algorithm Supported
+//! For validating `id_token`, Google may use these two kinds of hash algorithm to generate JWTs:
+//!
+//! - [x] RS256
+//! - [ ] ES256
+//!
+//! However, I cannot find any approach to get a valid `ES256` token, and as a result, I remained a `unimplemented` branch,
+//! and return an `Err` if the JWT is `ES256` hashed.
+//!
+//! Feel free to create a new issue if you have an example. PR is welcome.
+//!
+//! ## Usage (blocking)
+//! `Google-Oauth` also provides a blocking client. You need to enable `blocking` feature:
+//! ```toml
+//! [dependencies]
+//! google-oauth = { version = "1", features = ["blocking"] }
+//! ```
+//!
+//! You can use `google_oauth::Client` to validate tokens:
+//! ```rust
+//! use google_oauth::Client;
+//!
+//! fn main() {
+//!     let client_id = "your client id";
+//!     let id_token = "the id_token";
+//!
+//!     let client = Client::new(client_id);
+//!
+//!     let payload = client.validate_id_token(id_token).unwrap();
+//!
+//!     println!("Hello, I am {}", &payload.sub);
+//! }
+//! ```
+//!
+//! > Full example, please view ./examples/blocking/
+//!
+//! ## WebAssembly (wasm)
+//! `Google-Oauth` supports wasm, feature `wasm` is required.
+//! ```toml
+//! [dependencies]
+//! google-oauth = { version = "1", features = ["wasm"] }
+//! ```
+//!
+//! You can build this library with ``wasm-pack build --features wasm``. (`cargo install wasm-pack` to install first.)
+//!
+//! If you need to import `wasm` into your project, you can use `google_oauth::Client` to run async functions.
+//!
+//! ## Features
+//! + `default`: enable `AsyncClient`.
+//! + `blocking`: enable `Client`.
+//! + `wasm`: disable `AsyncClient` and `Client`(`blocking`), enable `Client` (`wasm`).
 //!
 
 #[cfg(feature = "blocking")]
