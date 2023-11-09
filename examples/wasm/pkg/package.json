@@ -1,4 +1,28 @@
 {
+  "name": "google-oauth",
+  "description": "Google oauth server-side client",
+  "version": "1.4.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caojen/google-oauth"
+  },
+  "files": [
+    "google_oauth_bg.wasm",
+    "google_oauth.js",
+    "google_oauth_bg.js",
+    "google_oauth.d.ts"
+  ],
+  "module": "google_oauth.js",
+  "types": "google_oauth.d.ts",
+  "sideEffects": [
+    "./google_oauth.js",
+    "./snippets/*"
+  ],
+  "keywords": [
+    "google",
+    "oauth2"
+  ],
   "scripts": {
     "serve": "webpack-dev-server"
   },
