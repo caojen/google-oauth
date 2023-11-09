@@ -5,6 +5,7 @@ use std::sync::{Arc, RwLock};
 use lazy_static::lazy_static;
 use crate::{DEFAULT_TIMEOUT, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
 use std::time::{Duration, Instant};
+use log::debug;
 use crate::certs::{Cert, Certs};
 use crate::jwt_parser::JwtParser;
 use crate::validate::id_token;
@@ -62,9 +63,12 @@ impl Client {
         {
             let cached_certs = self.cached_certs.read().unwrap();
             if !cached_certs.need_refresh() {
+                debug!("certs: use cache");
                 return cached_certs.find_cert(alg, kid);
             }
         }
+
+        debug!("certs: try to fetch new certs");
 
         let mut cached_certs = self.cached_certs.write().unwrap();
 
@@ -73,16 +77,14 @@ impl Client {
             .timeout(self.timeout)
             .send()?;
 
-        // parse the response header `age` and `max-age`.
-        let age = utils::parse_age_from_resp(&resp);
-        let max_age: u64 = utils::parse_max_age_from_resp(&resp);
+        // parse the response header `max-age`.
+        let max_age = utils::parse_max_age_from_resp(&resp);
 
         let text = resp.text()?;
         *cached_certs = serde_json::from_str(&text)?;
 
-        let cached_age = if age >= max_age { 0 } else { max_age - age };
         cached_certs.set_cache_until(
-            Instant::now().add(Duration::from_secs(cached_age))
+            Instant::now().add(Duration::from_secs(max_age))
         );
 
         cached_certs.find_cert(alg, kid)
@@ -111,8 +113,13 @@ mod tests {
 
     #[test]
     fn verify_id_token() {
-        let client = Client::new("525360879715-3kfn0tge3t1nouvk9ol5jgaiv2rtp0s9.apps.googleusercontent.com");
-        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6IjdkMzM0NDk3NTA2YWNiNzRjZGVlZGFhNjYxODRkMTU1NDdmODM2OTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI1MjUzNjA4Nzk3MTUtM2tmbjB0Z2UzdDFub3V2azlvbDVqZ2FpdjJydHAwczkuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI1MjUzNjA4Nzk3MTUtM2tmbjB0Z2UzdDFub3V2azlvbDVqZ2FpdjJydHAwczkuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDcxNDk1NjQ0NjU2MDc5Mjc1NjgiLCJlbWFpbCI6Im5ldGlkLmNhb2plbkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmJmIjoxNjk3Nzc2NjIwLCJuYW1lIjoiamlhbmVuIGNhbyIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJZ1FpWEJoN2RvU1FfQzduUGZSb1FnT3Nodlh6SWlERVdsREltZ1hfVExLdz1zOTYtYyIsImdpdmVuX25hbWUiOiJqaWFuZW4iLCJmYW1pbHlfbmFtZSI6ImNhbyIsImxvY2FsZSI6InpoLUNOIiwiaWF0IjoxNjk3Nzc2OTIwLCJleHAiOjE2OTc3ODA1MjAsImp0aSI6IjBlMGIxY2Q1M2Q1ZDY2NTk2NzQxOTQ5YjlkMjQyNThkNDhjOTVmNDAifQ.fbnfPzuwbWjJGMivDmHcZuPqRjFxajQL28CU40IGzArxSXZF3nzhyWRxzsA-t9yf4BmrsRPuUEAENqfKZwEc9z7csNuU1nw8TgrQcGl2BVS2kZrpLDwGe5b-3Vhjne8qDu4ZJC6QalKl1YqL4UcvWYHLEhj1n3SKAWzrd7MXfsanm3RsoNN7ErVdzBcq3FAr29MyYJfW8-MSEL4VHFRl8rkJAI-pa4fgwZVVpUxk_yqG5em5G2uAE5mmRGc8L3XgS0i-YudRIh7i95j8EhZsqTYEa1yHqWAlYlXhnVWetukpHl1QfwMVFbCtoAKGTc2wxq7RnMYTTrJeNWaC9hJEhw");
+        env_logger::try_init().unwrap_or_default();
+
+        let client = Client::new("1012916199183-mokbc9qrmssv8e1odemhv723jnaugcfk.apps.googleusercontent.com");
+        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1ZjRiZjQ2ZTUyYjMxZDliNjI0OWY3MzA5YWQwMzM4NDAwNjgwY2QiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDEyOTE2MTk5MTgzLW1va2JjOXFybXNzdjhlMW9kZW1odjcyM2puYXVnY2ZrLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNzE0OTU2NDQ2NTYwNzkyNzU2OCIsImVtYWlsIjoibmV0aWQuY2FvamVuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE2OTk1MDMyMDEsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lnUWlYQmg3ZG9TUV9DN25QZlJvUWdPc2h2WHpJaURFV2xESW1nWF9UTEt3PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwibG9jYWxlIjoiemgtQ04iLCJpYXQiOjE2OTk1MDM1MDEsImV4cCI6MTY5OTUwNzEwMSwianRpIjoiNTQxZTUxYTZkZDJjZGZkYmZkMjc5YWRkNDk0YWY2NzNiOGYxNTYwOCJ9.PMTxMgGlUQfWKS5GOUCGOzvFoc9qiwkhFI3QHSUcJsdyJIjnF7hhx9i9hg9S2_lBjahMeuak9MayiuOcspBDRHzpY1qKu6-DPy4VnkFdhVfJhcOBfgF6K-hC0RnJA9SX6q-A-K4gU-4S3Mvg0mTqhcoMHJKCX8SwU2ITyxtKanqlSHeM0xPPm6BMRP0gFdfnfhTTOln-Lxzap2ipuekYv657tkIvF66IPLB5lRDugPoSzEq1etAEb2rAHdGJ6xtxGByUu1PZuw0fHLsMzr-fXNen6HHUFW4rM6X5A_GtG8EhGitotUipE0jPRhkULbPTMBjjMcBx5rPq1OQ0f2jvgQ");
+        data.unwrap();
+
+        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1ZjRiZjQ2ZTUyYjMxZDliNjI0OWY3MzA5YWQwMzM4NDAwNjgwY2QiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDEyOTE2MTk5MTgzLW1va2JjOXFybXNzdjhlMW9kZW1odjcyM2puYXVnY2ZrLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNzE0OTU2NDQ2NTYwNzkyNzU2OCIsImVtYWlsIjoibmV0aWQuY2FvamVuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE2OTk1MDMyMDEsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lnUWlYQmg3ZG9TUV9DN25QZlJvUWdPc2h2WHpJaURFV2xESW1nWF9UTEt3PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwibG9jYWxlIjoiemgtQ04iLCJpYXQiOjE2OTk1MDM1MDEsImV4cCI6MTY5OTUwNzEwMSwianRpIjoiNTQxZTUxYTZkZDJjZGZkYmZkMjc5YWRkNDk0YWY2NzNiOGYxNTYwOCJ9.PMTxMgGlUQfWKS5GOUCGOzvFoc9qiwkhFI3QHSUcJsdyJIjnF7hhx9i9hg9S2_lBjahMeuak9MayiuOcspBDRHzpY1qKu6-DPy4VnkFdhVfJhcOBfgF6K-hC0RnJA9SX6q-A-K4gU-4S3Mvg0mTqhcoMHJKCX8SwU2ITyxtKanqlSHeM0xPPm6BMRP0gFdfnfhTTOln-Lxzap2ipuekYv657tkIvF66IPLB5lRDugPoSzEq1etAEb2rAHdGJ6xtxGByUu1PZuw0fHLsMzr-fXNen6HHUFW4rM6X5A_GtG8EhGitotUipE0jPRhkULbPTMBjjMcBx5rPq1OQ0f2jvgQ");
         data.unwrap();
     }
 

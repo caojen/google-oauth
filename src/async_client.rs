@@ -80,15 +80,13 @@ impl AsyncClient {
             .await?;
 
         // parse the response header `age` and `max-age`.
-        let age = utils::parse_age_from_async_resp(&resp);
-        let max_age: u64 = utils::parse_max_age_from_async_resp(&resp);
+        let max_age = utils::parse_max_age_from_async_resp(&resp);
 
         let text = resp.text().await?;
         *cached_certs = serde_json::from_str(&text)?;
 
-        let cached_age = if age >= max_age { 0 } else { max_age - age };
         cached_certs.set_cache_until(
-            Instant::now().add(Duration::from_secs(cached_age))
+            Instant::now().add(Duration::from_secs(max_age))
         );
 
         cached_certs.find_cert(alg, kid)
