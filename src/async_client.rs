@@ -1,8 +1,14 @@
 #![allow(non_upper_case_globals)]
 
-use std::time::Duration;
+use std::ops::Add;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
-use crate::{Cert, Certs, DEFAULT_TIMEOUT, find_cert, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, JwtParser};
+use log::debug;
+use async_rwlock::RwLock;
+use crate::{DEFAULT_TIMEOUT, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
+use crate::certs::{Cert, Certs};
+use crate::jwt_parser::JwtParser;
 use crate::validate::id_token;
 
 lazy_static! {
@@ -14,14 +20,16 @@ lazy_static! {
 pub struct AsyncClient {
     client_id: String,
     timeout: Duration,
+    cached_certs: Arc<RwLock<Certs>>,
 }
 
 impl AsyncClient {
-    /// Create a new client.
+    /// Create a new async client.
     pub fn new<S: ToString>(client_id: S) -> Self {
         Self {
             client_id: client_id.to_string(),
             timeout: Duration::from_secs(DEFAULT_TIMEOUT),
+            cached_certs: Arc::default(),
         }
     }
 
@@ -53,22 +61,35 @@ impl AsyncClient {
     }
 
     async fn get_cert(&self, alg: &str, kid: &str) -> anyhow::Result<Cert> {
-        let certs = self.get_certs_from_server().await?;
+        {
+            let cached_certs = self.cached_certs.read().await;
+            if !cached_certs.need_refresh() {
+                debug!("certs: use cache");
+                return cached_certs.find_cert(alg, kid);
+            }
+        }
 
-        find_cert(certs, alg, kid)
-    }
+        debug!("certs: try to fetch new certs");
 
-    async fn get_certs_from_server(&self) -> anyhow::Result<Vec<Cert>> {
-        let certs = ca.get(GOOGLE_SA_CERTS_URL)
+        let mut cached_certs = self.cached_certs.write().await;
+
+        // refresh certs here...
+        let resp = ca.get(GOOGLE_SA_CERTS_URL)
             .timeout(self.timeout)
             .send()
-            .await?
-            .text()
             .await?;
 
-        let certs: Certs = serde_json::from_str(&certs)?;
+        // parse the response header `age` and `max-age`.
+        let max_age = utils::parse_max_age_from_async_resp(&resp);
 
-        Ok(certs.keys)
+        let text = resp.text().await?;
+        *cached_certs = serde_json::from_str(&text)?;
+
+        cached_certs.set_cache_until(
+            Instant::now().add(Duration::from_secs(max_age))
+        );
+
+        cached_certs.find_cert(alg, kid)
     }
 
     /// Try to validate access token. If succeed, return the user info.
@@ -96,16 +117,20 @@ mod tests {
 
     #[tokio::test]
     async fn verify() {
-        let client = AsyncClient::new("1012916199183-mokbc9qrmssv8e1odemhv723jnaugcfk.apps.googleusercontent.com");
-        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6ImM3ZTExNDEwNTlhMTliMjE4MjA5YmM1YWY3YTgxYTcyMGUzOWI1MDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDEyOTE2MTk5MTgzLW1va2JjOXFybXNzdjhlMW9kZW1odjcyM2puYXVnY2ZrLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNzE0OTU2NDQ2NTYwNzkyNzU2OCIsImVtYWlsIjoibmV0aWQuY2FvamVuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE2OTM0NTAwNDIsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FBY0hUdGRPN005V0ZOUnF6VDZ2SF9VTXBsTGhTNUtxZWVjOHhwY3h0NmJuaTVKSUlBPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwibG9jYWxlIjoiemgtQ04iLCJpYXQiOjE2OTM0NTAzNDIsImV4cCI6MTY5MzQ1Mzk0MiwianRpIjoiOTRkZTZlZTFkMzk4ODY4Mzk2NmExZGE5MTE5MjVkNDQwYzA1MjM0OCJ9.U9m2xpMzQO8POBjJ1qkrkpNDzf7MqxfM0f8uENvzuNdD_30RpvLoa1rMcmTdQMn7Fp5thTW0oiW6tm1Wb4H3AxnIbadOKd2XNNOlrES7tL0snSGj8LMDWVE3VF6RC6Q0OgIgcnR6IFA-9Dj9YTyNhRjsDgtCVh1n8pyvcuNjMAE62x-Ehj9ByV-41mG34IHFymC8CFtIVYHBKvJOJbP7yej_e10lqMOp0ksF_7tCy762ic2cI4P9lYtbat6EtOwMATPxka9PNRSZr22yKS_6wHGEjU91urnMnzVA3JNk0aN7eigZt3qfZSpHdU7PNbaHNi6kOruRfFbxkpvJ6zMLOA").await;
+        env_logger::try_init().unwrap_or_default();
 
+        let client = AsyncClient::new("1012916199183-mokbc9qrmssv8e1odemhv723jnaugcfk.apps.googleusercontent.com");
+        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1ZjRiZjQ2ZTUyYjMxZDliNjI0OWY3MzA5YWQwMzM4NDAwNjgwY2QiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDEyOTE2MTk5MTgzLW1va2JjOXFybXNzdjhlMW9kZW1odjcyM2puYXVnY2ZrLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNzE0OTU2NDQ2NTYwNzkyNzU2OCIsImVtYWlsIjoibmV0aWQuY2FvamVuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE2OTk1MDMyMDEsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lnUWlYQmg3ZG9TUV9DN25QZlJvUWdPc2h2WHpJaURFV2xESW1nWF9UTEt3PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwibG9jYWxlIjoiemgtQ04iLCJpYXQiOjE2OTk1MDM1MDEsImV4cCI6MTY5OTUwNzEwMSwianRpIjoiNTQxZTUxYTZkZDJjZGZkYmZkMjc5YWRkNDk0YWY2NzNiOGYxNTYwOCJ9.PMTxMgGlUQfWKS5GOUCGOzvFoc9qiwkhFI3QHSUcJsdyJIjnF7hhx9i9hg9S2_lBjahMeuak9MayiuOcspBDRHzpY1qKu6-DPy4VnkFdhVfJhcOBfgF6K-hC0RnJA9SX6q-A-K4gU-4S3Mvg0mTqhcoMHJKCX8SwU2ITyxtKanqlSHeM0xPPm6BMRP0gFdfnfhTTOln-Lxzap2ipuekYv657tkIvF66IPLB5lRDugPoSzEq1etAEb2rAHdGJ6xtxGByUu1PZuw0fHLsMzr-fXNen6HHUFW4rM6X5A_GtG8EhGitotUipE0jPRhkULbPTMBjjMcBx5rPq1OQ0f2jvgQ").await;
+        data.unwrap();
+
+        let data = client.validate_id_token("eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1ZjRiZjQ2ZTUyYjMxZDliNjI0OWY3MzA5YWQwMzM4NDAwNjgwY2QiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDEyOTE2MTk5MTgzLW1va2JjOXFybXNzdjhlMW9kZW1odjcyM2puYXVnY2ZrLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTAxMjkxNjE5OTE4My1tb2tiYzlxcm1zc3Y4ZTFvZGVtaHY3MjNqbmF1Z2Nmay5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNzE0OTU2NDQ2NTYwNzkyNzU2OCIsImVtYWlsIjoibmV0aWQuY2FvamVuQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE2OTk1MDMyMDEsIm5hbWUiOiJqaWFuZW4gY2FvIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lnUWlYQmg3ZG9TUV9DN25QZlJvUWdPc2h2WHpJaURFV2xESW1nWF9UTEt3PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImppYW5lbiIsImZhbWlseV9uYW1lIjoiY2FvIiwibG9jYWxlIjoiemgtQ04iLCJpYXQiOjE2OTk1MDM1MDEsImV4cCI6MTY5OTUwNzEwMSwianRpIjoiNTQxZTUxYTZkZDJjZGZkYmZkMjc5YWRkNDk0YWY2NzNiOGYxNTYwOCJ9.PMTxMgGlUQfWKS5GOUCGOzvFoc9qiwkhFI3QHSUcJsdyJIjnF7hhx9i9hg9S2_lBjahMeuak9MayiuOcspBDRHzpY1qKu6-DPy4VnkFdhVfJhcOBfgF6K-hC0RnJA9SX6q-A-K4gU-4S3Mvg0mTqhcoMHJKCX8SwU2ITyxtKanqlSHeM0xPPm6BMRP0gFdfnfhTTOln-Lxzap2ipuekYv657tkIvF66IPLB5lRDugPoSzEq1etAEb2rAHdGJ6xtxGByUu1PZuw0fHLsMzr-fXNen6HHUFW4rM6X5A_GtG8EhGitotUipE0jPRhkULbPTMBjjMcBx5rPq1OQ0f2jvgQ").await;
         data.unwrap();
     }
 
     #[tokio::test]
     async fn verify_access_token() {
         let client = AsyncClient::new("525360879715-3kfn0tge3t1nouvk9ol5jgaiv2rtp0s9.apps.googleusercontent.com");
-        let token = "ya29.a0AfB_byCH_ODaYF16gXLDn7yO6M6En58FEyBfWeentCVJ664dy6ASRYDfVcYoN4qDDjWwFl7_9R6deSPndy8ZZf1sO5X078pqY5oH4bDbydc-v3Ulux_LeIhWZQQybfjJKdFGjmLaWGxOfYaiKhJGOFFzxI41XuX8FX9waCgYKAfMSARISFQGOcNnCqo7b7NhcUZjGUK6B9su5vw0171";
+        let token = "ya29.a0AfB_byAQCutpKSHb3-l7AZdv_HUPWVYgTbbCYbKT1xVgMgNX9kO2XvSiKp5C8NPmc846VGgpS0dCBYXTRnkCIcYt3QfdcWJmTviArX_C6bcLoznSyy3vCEqMOChUTOll6NCMMtvL2wR_C121PwGCk2_1Htdsp_J6xdhZaCgYKAdYSARISFQHGX2MiJKgr8WgVVyV7s2GbwhYctA0171";
 
         let payload = client.validate_access_token(token).await;
         payload.unwrap();
