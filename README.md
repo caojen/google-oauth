@@ -81,6 +81,8 @@ async fn main() {
 
 Warning: the result of `access_token` is different from the result of `id_token`, although they have a same field `sub`.
 
+> Full example, please view ./example/async_client/
+
 ## Algorithm Supported
 For validating `id_token`, Google may use these two kinds of hash algorithm to generate JWTs:
 [-] RS256
@@ -115,3 +117,16 @@ fn main() {
 ```
 
 > Full example, please view ./examples/blocking/
+
+## WebAssembly (wasm)
+`Google-Oauth` supports wasm, feature `wasm` is required.
+```toml
+[dependencies]
+google-oauth = { version = "1", features = ["wasm"] }
+```
+
+You can build this library with ``wasm-pack build --features wasm``.
+
+If you need to import `wasm` into your project, you can use `google_oauth::Client` to access async functions.
+
+> Full example, please view ./examples/wasm/
