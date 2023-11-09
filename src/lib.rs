@@ -63,7 +63,11 @@
 
 #[cfg(feature = "blocking")]
 mod client;
+#[cfg(not(feature = "wasm"))]
 mod async_client;
+#[cfg(feature = "wasm")]
+mod wasm_client;
+
 mod output;
 mod jwt_parser;
 mod certs;
@@ -72,7 +76,10 @@ mod utils;
 
 #[cfg(feature = "blocking")]
 pub use client::*;
+#[cfg(not(feature = "wasm"))]
 pub use async_client::*;
+#[cfg(feature = "wasm")]
+pub use wasm_client::*;
 pub use output::*;
 
 const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
@@ -80,3 +87,6 @@ const GOOGLE_ISS: [&str; 2] = ["https://accounts.google.com", "accounts.google.c
 const DEFAULT_TIMEOUT: u64 = 5u64;
 
 const GOOGLE_OAUTH_V3_USER_INFO_API: &str = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+#[cfg(all(feature = "wasm", feature = "blocking"))]
+compile_error!("wasm and blocking are mutually exclusive and cannot be enabled together");
