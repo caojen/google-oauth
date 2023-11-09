@@ -9,7 +9,7 @@ use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
 
 use crate::{GOOGLE_ISS, GooglePayload};
-use crate::certs::Cert;
+use crate::Cert;
 use crate::jwt_parser::JwtParser;
 
 pub fn validate_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<GooglePayload>)

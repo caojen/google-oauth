@@ -65,11 +65,13 @@
 mod client;
 #[cfg(not(feature = "wasm"))]
 mod async_client;
-#[cfg(feature = "wasm")]
-mod wasm_client;
-
 mod output;
+
+#[cfg(feature = "wasm")]
+mod wasm;
+
 mod jwt_parser;
+#[cfg(not(feature = "wasm"))]
 mod certs;
 mod validate;
 mod utils;
@@ -78,14 +80,18 @@ mod utils;
 pub use client::*;
 #[cfg(not(feature = "wasm"))]
 pub use async_client::*;
-#[cfg(feature = "wasm")]
-pub use wasm_client::*;
 pub use output::*;
 
-const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
-const GOOGLE_ISS: [&str; 2] = ["https://accounts.google.com", "accounts.google.com"];
-const DEFAULT_TIMEOUT: u64 = 5u64;
+#[cfg(feature = "wasm")]
+pub use wasm::*;
 
+#[allow(unused)]
+const GOOGLE_SA_CERTS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
+#[allow(unused)]
+const GOOGLE_ISS: [&str; 2] = ["https://accounts.google.com", "accounts.google.com"];
+#[allow(unused)]
+const DEFAULT_TIMEOUT: u64 = 5u64;
+#[allow(unused)]
 const GOOGLE_OAUTH_V3_USER_INFO_API: &str = "https://www.googleapis.com/oauth2/v3/userinfo";
 
 #[cfg(all(feature = "wasm", feature = "blocking"))]

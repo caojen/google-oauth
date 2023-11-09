@@ -1,10 +1,12 @@
 use serde::{Serialize, Deserialize};
+use wasm_bindgen::prelude::*;
 
 /// `GooglePayload` is the user data from google.
 ///
 /// see https://developers.google.com/identity/openid-connect/openid-connect for more info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
+#[wasm_bindgen(getter_with_clone)]
 pub struct GooglePayload {
     // These fields are marked `always`.
     pub aud: String,
@@ -38,6 +40,7 @@ pub struct GooglePayload {
 /// reference: https://gist.github.com/evanj/e415d808dbb6c2a0bd866cd9d17ef5aa
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
+#[wasm_bindgen(getter_with_clone)]
 pub struct GoogleAccessTokenPayload {
     pub sub: String,
     pub picture: Option<String>,

@@ -28,10 +28,11 @@ log = { version = "0.4" }
 async-rwlock = { version = "1" }
 getrandom = { version = "0.2.10", features = ["js"] }
 wasm-bindgen = { version = "0.2.87", optional = true }
+wasm-bindgen-futures = { version = "0.4.37", optional = true }
 
 [features]
 blocking = ["reqwest/blocking"]
-wasm = ["dep:wasm-bindgen"]
+wasm = ["dep:wasm-bindgen", "dep:wasm-bindgen-futures"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros"] }
