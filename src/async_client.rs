@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use log::debug;
-use tokio::sync::RwLock;
+use async_rwlock::RwLock;
 use crate::{DEFAULT_TIMEOUT, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
 use crate::certs::{Cert, Certs};
 use crate::jwt_parser::JwtParser;
