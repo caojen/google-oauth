@@ -18,15 +18,22 @@ readme = "README.md"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 anyhow = { version = "1" }
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.11" }
 lazy_static = { version = "1" }
 base64 = { version = "0.21" }
-sha256 = { version = "1" }
+sha256 = { version = "1", default-features = false }
 rsa = { version = "0.8.2", features = ["sha2"] }
 hex = { version = "0.4" }
 log = { version = "0.4" }
 async-rwlock = { version = "1" }
+getrandom = { version = "0.2.10", features = ["js"] }
+
+[features]
+blocking = ["reqwest/blocking"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros"] }
 env_logger = "0.10.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]

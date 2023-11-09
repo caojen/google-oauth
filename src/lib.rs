@@ -53,6 +53,7 @@
 //! Please use api [`Client::validate_access_token`] or [`AsyncClient::validate_access_token`] instead.
 //!
 
+#[cfg(feature = "blocking")]
 mod client;
 mod async_client;
 mod output;
@@ -61,6 +62,7 @@ mod certs;
 mod validate;
 mod utils;
 
+#[cfg(feature = "blocking")]
 pub use client::*;
 pub use async_client::*;
 pub use output::*;

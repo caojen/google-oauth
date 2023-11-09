@@ -5,6 +5,7 @@ pub fn parse_max_age_from_async_resp(resp: &reqwest::Response) -> u64 {
     parse_max_age_from_header(resp.headers().get("cache-control"))
 }
 
+#[cfg(feature = "blocking")]
 #[inline]
 pub fn parse_max_age_from_resp(resp: &reqwest::blocking::Response) -> u64 {
     parse_max_age_from_header(resp.headers().get("cache-control"))
