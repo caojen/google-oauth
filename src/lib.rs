@@ -146,7 +146,6 @@ mod output;
 mod wasm;
 
 mod jwt_parser;
-#[cfg(not(feature = "wasm"))]
 mod certs;
 mod validate;
 mod utils;
@@ -155,7 +154,6 @@ mod utils;
 pub use client::*;
 #[cfg(not(feature = "wasm"))]
 pub use async_client::*;
-#[cfg(not(feature = "wasm"))]
 pub use certs::*;
 pub use output::*;
 

@@ -1,7 +1,9 @@
 #![allow(non_upper_case_globals)]
 
+use std::ops::Add;
 use std::sync::Arc;
-use std::time;
+use web_time::Instant;
+use std::time::Duration;
 use async_rwlock::RwLock;
 use wasm_bindgen::prelude::*;
 use crate::{Cert, Certs, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
@@ -75,7 +77,9 @@ impl Client {
         let text = resp.text().await?;
 
         *cached_certs = serde_json::from_str(&text)?;
-        cached_certs.set_cache_until((time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_secs() + max_age) as u32);
+        cached_certs.set_cache_until(
+            Instant::now().add(Duration::from_secs(max_age))
+        );
 
         match cached_certs.find_cert(alg, kid) {
             Ok(cert) => Ok(cert),

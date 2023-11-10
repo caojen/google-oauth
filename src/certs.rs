@@ -1,4 +1,7 @@
+#[cfg(not(feature = "wasm"))]
 use std::time::Instant;
+#[cfg(feature = "wasm")]
+use web_time::Instant;
 use anyhow::bail;
 use log::debug;
 use serde::{Deserialize, Serialize};
