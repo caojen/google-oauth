@@ -1,3 +1,6 @@
+#[cfg(feature = "wasm")]
+use web_time::{SystemTime, UNIX_EPOCH};
+#[cfg(not(feature = "wasm"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::bail;
 use base64::Engine;
