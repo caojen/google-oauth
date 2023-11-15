@@ -17,7 +17,7 @@ async fn main() {
     // Usually we use `sub` as the identifier for our user...
     println!("Hello, I am {}", &payload.sub);
 
-    // if you have multiple client_id, you can:
+    // if you have multiple client_ids, you can:
     let client = AsyncClient::new_with_vec(vec![client_id]);
     let payload = client.validate_id_token(id_token).await.unwrap();
     println!("Hello, I am {}", &payload.sub);
