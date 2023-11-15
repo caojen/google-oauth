@@ -51,6 +51,10 @@ async fn main() {
     // When we get the payload, that mean the id_token is valid.
     // Usually we use `sub` as the identifier for our user...
     println!("Hello, I am {}", &payload.sub);
+    
+    // If you have multiple client ids, you can:
+    let client = AsyncClient::new_with_vec(vec![client_id]);
+    // The validation fails when the id_token matches NONE of the provided client ids.
 }
 ```
 
