@@ -15,11 +15,12 @@ use crate::{GOOGLE_ISS, GooglePayload};
 use crate::Cert;
 use crate::jwt_parser::JwtParser;
 
-pub fn validate_info<S: AsRef<str>>(client_id: S, parser: &JwtParser<GooglePayload>)
-                                             -> anyhow::Result<()>
+pub fn validate_info<T, V>(client_ids: T, parser: &JwtParser<GooglePayload>) -> anyhow::Result<()>
+    where
+        T: AsRef<[V]>,
+        V: AsRef<str>,
 {
-    let client_id = client_id.as_ref();
-    if !client_id.is_empty() && client_id != parser.payload.aud.as_str() {
+    if !client_ids.as_ref().iter().any(|c| c.as_ref() == parser.payload.aud.as_str()) {
         bail!("id_token: audience provided does not match aud claim in the jwt");
     }
 

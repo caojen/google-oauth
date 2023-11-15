@@ -18,7 +18,7 @@ lazy_static! {
 /// AsyncClient is an async client to do verification.
 #[derive(Debug, Clone)]
 pub struct AsyncClient {
-    client_id: String,
+    client_ids: Vec<String>,
     timeout: Duration,
     cached_certs: Arc<RwLock<Certs>>,
 }
@@ -26,8 +26,22 @@ pub struct AsyncClient {
 impl AsyncClient {
     /// Create a new async client.
     pub fn new<S: ToString>(client_id: S) -> Self {
+        let client_id = client_id.to_string();
+        Self::new_with_vec(vec![client_id])
+    }
+
+    pub fn new_with_vec<T, V>(client_ids: T) -> Self
+        where
+            T: AsRef<[V]>,
+            V: AsRef<str> + Clone,
+    {
         Self {
-            client_id: client_id.to_string(),
+            client_ids: client_ids
+                .as_ref()
+                .to_vec()
+                .iter()
+                .map(|c| c.as_ref().to_string())
+                .collect(),
             timeout: Duration::from_secs(DEFAULT_TIMEOUT),
             cached_certs: Arc::default(),
         }
@@ -51,7 +65,7 @@ impl AsyncClient {
 
         let parser: JwtParser<GooglePayload> = JwtParser::parse(token)?;
 
-        id_token::validate_info(&self.client_id, &parser)?;
+        id_token::validate_info(&self.client_ids, &parser)?;
 
         let cert = self.get_cert(parser.header.alg.as_str(), parser.header.kid.as_str()).await?;
 
