@@ -40,7 +40,7 @@ impl Client {
             Err(e) => return Err(format!("{:?}", e)),
         };
 
-        if let Err(e) = id_token::validate_info(&self.client_id, &parser) {
+        if let Err(e) = id_token::validate_info(&[&self.client_id], &parser) {
             return Err(format!("{:?}", e));
         }
 

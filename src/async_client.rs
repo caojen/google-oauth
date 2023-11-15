@@ -27,18 +27,17 @@ impl AsyncClient {
     /// Create a new async client.
     pub fn new<S: ToString>(client_id: S) -> Self {
         let client_id = client_id.to_string();
-        Self::new_with_vec(vec![client_id])
+        Self::new_with_vec(&[client_id])
     }
 
     pub fn new_with_vec<T, V>(client_ids: T) -> Self
         where
             T: AsRef<[V]>,
-            V: AsRef<str> + Clone,
+            V: AsRef<str>,
     {
         Self {
             client_ids: client_ids
                 .as_ref()
-                .to_vec()
                 .iter()
                 .map(|c| c.as_ref().to_string())
                 .collect(),
