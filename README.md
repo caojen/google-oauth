@@ -105,7 +105,7 @@ Feel free to create a new issue if you have an example. PR is welcome.
 google-oauth = { version = "1", features = ["blocking"] }
 ```
 
-You can use `google_oauth::Client`[lib.rs](src%2Flib.rs) to validate tokens:
+You can use `google_oauth::Client` to validate tokens:
 ```rust
 use google_oauth::Client;
 
@@ -119,7 +119,7 @@ fn main() {
     
     println!("Hello, I am {}", &payload.sub);
 }
-```[lib.rs](src%2Flib.rs)
+```
 
 > For full example, please view ./examples/blocking/
 
