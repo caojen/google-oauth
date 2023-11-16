@@ -2,9 +2,9 @@
 use std::time::Instant;
 #[cfg(feature = "wasm")]
 use web_time::Instant;
-use anyhow::bail;
 use log::debug;
 use serde::{Deserialize, Serialize};
+use crate::{IDTokenCertNotFoundError, MyResult};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Certs {
@@ -27,13 +27,13 @@ pub struct Cert {
 }
 
 impl Certs {
-    pub fn find_cert<T: AsRef<str>>(&self, alg: T, kid: T) -> anyhow::Result<Cert> {
+    pub fn find_cert<T: AsRef<str>>(&self, alg: T, kid: T) -> MyResult<Cert> {
         let alg = alg.as_ref();
         let kid = kid.as_ref();
 
         match self.keys.iter().find(|cert| cert.alg == alg && cert.kid == kid) {
             Some(cert ) => Ok(cert.clone()),
-            None => bail!("alg {}, kid = {} not found in google certs", alg, kid),
+            None => Err(IDTokenCertNotFoundError::new(alg, kid))?,
         }
     }
 

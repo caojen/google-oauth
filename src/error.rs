@@ -26,6 +26,10 @@ pub enum Error {
     RS256Error(rsa::errors::Error),
     /// Error when id_token has an unimplemented hash algorithm
     HashAlgorithmUnimplementedError(HashAlgorithmUnimplementedError),
+    /// Error when alg and kid (in header of id_token) not found in any cert from google server
+    IDTokenCertNotFoundError(IDTokenCertNotFoundError),
+    /// Any [reqwest::Error]
+    ReqwestError(reqwest::Error),
 }
 
 impl Display for Error {
@@ -41,6 +45,8 @@ impl Display for Error {
             Self::RS256SignatureError(e) => Display::fmt(&e, f),
             Self::RS256Error(e) => Display::fmt(&e, f),
             Self::HashAlgorithmUnimplementedError(e) => Display::fmt(&e, f),
+            Self::IDTokenCertNotFoundError(e) => Display::fmt(&e, f),
+            Self::ReqwestError(e) => Display::fmt(&e, f),
         }
     }
 }
@@ -227,5 +233,43 @@ impl From<HashAlgorithmUnimplementedError> for Error {
     #[inline]
     fn from(err: HashAlgorithmUnimplementedError) -> Self {
         Self::HashAlgorithmUnimplementedError(err)
+    }
+}
+
+#[derive(Debug)]
+pub struct IDTokenCertNotFoundError {
+    alg: String,
+    kid: String,
+}
+
+impl IDTokenCertNotFoundError {
+    #[inline]
+    pub fn new<S: ToString>(alg: S, kid: S) -> Self {
+        Self {
+            alg: alg.to_string(),
+            kid: kid.to_string(),
+        }
+    }
+}
+
+impl Display for IDTokenCertNotFoundError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "alg={}, kid={} not found in google certs", &self.alg, &self.kid)
+    }
+}
+
+impl std::error::Error for IDTokenCertNotFoundError {}
+
+impl From<IDTokenCertNotFoundError> for Error {
+    #[inline]
+    fn from(err: IDTokenCertNotFoundError) -> Self {
+        Self::IDTokenCertNotFoundError(err)
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    #[inline]
+    fn from(err: reqwest::Error) -> Self {
+        Self::ReqwestError(err)
     }
 }
