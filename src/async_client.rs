@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use log::debug;
 use async_rwlock::RwLock;
-use crate::{DEFAULT_TIMEOUT, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
+use crate::{DEFAULT_TIMEOUT, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, MyResult, utils};
 use crate::certs::{Cert, Certs};
 use crate::jwt_parser::JwtParser;
 use crate::validate::id_token;
@@ -57,7 +57,7 @@ impl AsyncClient {
     }
 
     /// Do verification with `id_token`. If succeed, return the user data.
-    pub async fn validate_id_token<S>(&self, token: S) -> anyhow::Result<GooglePayload>
+    pub async fn validate_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
         where S: AsRef<str>
     {
         let token = token.as_ref();
@@ -73,7 +73,7 @@ impl AsyncClient {
         Ok(parser.payload)
     }
 
-    async fn get_cert(&self, alg: &str, kid: &str) -> anyhow::Result<Cert> {
+    async fn get_cert(&self, alg: &str, kid: &str) -> MyResult<Cert> {
         {
             let cached_certs = self.cached_certs.read().await;
             if !cached_certs.need_refresh() {
@@ -106,7 +106,7 @@ impl AsyncClient {
     }
 
     /// Try to validate access token. If succeed, return the user info.
-    pub async fn validate_access_token<S>(&self, token: S) -> anyhow::Result<GoogleAccessTokenPayload>
+    pub async fn validate_access_token<S>(&self, token: S) -> MyResult<GoogleAccessTokenPayload>
         where S: AsRef<str>
     {
         let token = token.as_ref();

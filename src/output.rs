@@ -29,7 +29,7 @@ pub struct GooglePayload {
     pub nonce: Option<String>,
     pub picture: Option<String>,
 
-    // These fields not list in document, but it may exist
+    // These fields not list in document, but may exist
     pub nbf: Option<u64>,
     pub jti: Option<String>,
 }

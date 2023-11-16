@@ -119,6 +119,11 @@
 //!
 //! > For full example, please view ./examples/blocking/
 //!
+//! ## Error Handling
+//!
+//! Most APIs return an `Result<T, E>`, where `E` is [`Error`].
+//! See [`Error`] for more information.
+//!
 //! ## WebAssembly (wasm)
 //! `Google-Oauth` supports wasm, feature `wasm` is required.
 //! ```toml
@@ -149,6 +154,7 @@ mod jwt_parser;
 mod certs;
 mod validate;
 mod utils;
+mod error;
 
 #[cfg(feature = "blocking")]
 pub use client::*;
@@ -156,6 +162,9 @@ pub use client::*;
 pub use async_client::*;
 pub use certs::*;
 pub use output::*;
+pub use error::*;
+
+type MyResult<T> = error::Result<T>;
 
 #[cfg(feature = "wasm")]
 pub use wasm::*;

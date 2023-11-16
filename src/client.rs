@@ -9,6 +9,7 @@ use log::debug;
 use crate::certs::{Cert, Certs};
 use crate::jwt_parser::JwtParser;
 use crate::validate::id_token;
+use crate::MyResult;
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -58,7 +59,7 @@ impl Client {
     }
 
     /// Do verification with `id_token`. If succeed, return the user data.
-    pub fn validate_id_token<S>(&self, token: S) -> anyhow::Result<GooglePayload>
+    pub fn validate_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
         where S: AsRef<str>
     {
         let token = token.as_ref();
@@ -74,7 +75,7 @@ impl Client {
         Ok(parser.payload)
     }
 
-    fn get_cert(&self, alg: &str, kid: &str) -> anyhow::Result<Cert> {
+    fn get_cert(&self, alg: &str, kid: &str) -> MyResult<Cert> {
         {
             let cached_certs = self.cached_certs.read().unwrap();
             if !cached_certs.need_refresh() {
@@ -106,7 +107,7 @@ impl Client {
     }
 
     /// Try to validate access token. If succeed, return the user info.
-    pub fn validate_access_token<S>(&self, token: S) -> anyhow::Result<GoogleAccessTokenPayload>
+    pub fn validate_access_token<S>(&self, token: S) -> MyResult<GoogleAccessTokenPayload>
         where S: AsRef<str>
     {
         let token = token.as_ref();
