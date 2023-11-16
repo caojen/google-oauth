@@ -1,6 +1,9 @@
 use std::fmt::{Debug, Display, Formatter};
-use std::time;
 use crate::GOOGLE_ISS;
+#[cfg(feature = "wasm")]
+use web_time::SystemTimeError;
+#[cfg(not(feature = "wasm"))]
+use std::time::SystemTimeError;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -14,8 +17,8 @@ pub enum Error {
     IDTokenSplitError(IDTokenSplitError),
     /// Error when id_token is expired
     IDTokenExpiredError(IDTokenExpiredError),
-    /// Any [SystemTimeError] from [time]
-    SystemTimeError(time::SystemTimeError),
+    /// Any [SystemTimeError]
+    SystemTimeError(SystemTimeError),
     /// Error when id_token has an issuer which not listed in [GOOGLE_ISS]
     GoogleIssuerNotMatchError(GoogleIssuerNotMatchError),
     /// Error when id_token has a client_id which not listed when client was created.
@@ -123,9 +126,9 @@ impl Display for IDTokenExpiredError {
 
 impl std::error::Error for IDTokenExpiredError {}
 
-impl From<time::SystemTimeError> for Error {
+impl From<SystemTimeError> for Error {
     #[inline]
-    fn from(err: time::SystemTimeError) -> Self {
+    fn from(err: SystemTimeError) -> Self {
         Self::SystemTimeError(err)
     }
 }
