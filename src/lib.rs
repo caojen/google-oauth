@@ -119,6 +119,11 @@
 //!
 //! > For full example, please view ./examples/blocking/
 //!
+//! ## Error Handling
+//!
+//! Most APIs return an `Result<T, E>`, where `E` is [`Error`].
+//! See [`Error`] for more information.
+//!
 //! ## WebAssembly (wasm)
 //! `Google-Oauth` supports wasm, feature `wasm` is required.
 //! ```toml
