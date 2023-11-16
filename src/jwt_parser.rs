@@ -1,8 +1,8 @@
-use anyhow::bail;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use base64::prelude::{BASE64_URL_SAFE_NO_PAD};
+use crate::{IDTokenSplitError, MyResult};
 
 #[derive(Debug)]
 pub struct JwtParser<'a, T> {
@@ -13,11 +13,13 @@ pub struct JwtParser<'a, T> {
 }
 
 impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
-    pub fn parse(token: &'a str) -> anyhow::Result<JwtParser<'a, T>> {
+    pub fn parse(token: &'a str) -> MyResult<JwtParser<'a, T>> {
         let parts: Vec<&'a str> = token.split('.').collect();
 
-        if parts.len() != 3 {
-            bail!("invalid jwt token, token must have 3 segments, but get {}", parts.len());
+        const EXPECTED_SEGMENTS_COUNT: usize = 3usize;
+
+        if parts.len() != EXPECTED_SEGMENTS_COUNT {
+            Err(IDTokenSplitError::new(EXPECTED_SEGMENTS_COUNT, parts.len()))?
         }
 
         Ok(Self {
@@ -29,21 +31,21 @@ impl<'a, T> JwtParser<'a, T> where T: DeserializeOwned {
         })
     }
 
-    fn parse_header(header: &str) -> anyhow::Result<JwtHeader> {
+    fn parse_header(header: &str) -> MyResult<JwtHeader> {
         let header = BASE64_URL_SAFE_NO_PAD.decode(header)?;
         let jh: JwtHeader = serde_json::from_slice(header.as_slice())?;
 
         Ok(jh)
     }
 
-    fn parse_payload(payload: &str) -> anyhow::Result<T> {
+    fn parse_payload(payload: &str) -> MyResult<T> {
         let payload = BASE64_URL_SAFE_NO_PAD.decode(payload)?;
         let payload: T = serde_json::from_slice(payload.as_slice())?;
 
         Ok(payload)
     }
 
-    fn parse_signature(sig: &str) -> anyhow::Result<Vec<u8>> {
+    fn parse_signature(sig: &str) -> MyResult<Vec<u8>> {
         let sig = BASE64_URL_SAFE_NO_PAD.decode(sig)?;
 
         Ok(sig)

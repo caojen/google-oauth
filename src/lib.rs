@@ -159,6 +159,8 @@ pub use certs::*;
 pub use output::*;
 pub use error::*;
 
+type MyResult<T> = error::Result<T>;
+
 #[cfg(feature = "wasm")]
 pub use wasm::*;
 
