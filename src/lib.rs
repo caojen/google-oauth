@@ -149,6 +149,7 @@ mod jwt_parser;
 mod certs;
 mod validate;
 mod utils;
+mod error;
 
 #[cfg(feature = "blocking")]
 pub use client::*;
@@ -156,6 +157,7 @@ pub use client::*;
 pub use async_client::*;
 pub use certs::*;
 pub use output::*;
+pub use error::*;
 
 #[cfg(feature = "wasm")]
 pub use wasm::*;
