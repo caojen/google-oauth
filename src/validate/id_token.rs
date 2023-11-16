@@ -2,7 +2,6 @@
 use web_time::{SystemTime, UNIX_EPOCH};
 #[cfg(not(feature = "wasm"))]
 use std::time::{SystemTime, UNIX_EPOCH};
-use anyhow::bail;
 use base64::Engine;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use rsa::BigUint;
@@ -11,7 +10,7 @@ use rsa::sha2::Sha256;
 use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
 
-use crate::{GOOGLE_ISS, GoogleIssuerNotMatchError, GooglePayload, IDTokenClientIDNotFoundError, MyResult};
+use crate::{GOOGLE_ISS, GoogleIssuerNotMatchError, GooglePayload, HashAlgorithmUnimplementedError, IDTokenClientIDNotFoundError, MyResult};
 use crate::Cert;
 use crate::jwt_parser::JwtParser;
 
@@ -39,15 +38,14 @@ pub fn validate_info<T, V>(client_ids: T, parser: &JwtParser<GooglePayload>) -> 
     Ok(())
 }
 
-pub fn do_validate(cert: &Cert, parser: &JwtParser<GooglePayload>) -> anyhow::Result<()> {
+pub fn do_validate(cert: &Cert, parser: &JwtParser<GooglePayload>) -> MyResult<()> {
     match parser.header.alg.as_str() {
         "RS256" => validate_rs256(
             cert,
             parser.msg().as_str(),
             parser.sig.as_slice(),
         )?,
-        "ES256" => bail!("id_token: unimplemented alg: ES256"),
-        a => bail!("id_token: expected JWT signed with RS256 or ES256, but found {}", a),
+        a => Err(HashAlgorithmUnimplementedError::new(a))?,
     };
 
     Ok(())

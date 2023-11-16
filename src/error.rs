@@ -24,6 +24,8 @@ pub enum Error {
     RS256SignatureError(rsa::signature::Error),
     /// Any [rsa::errors::Error]
     RS256Error(rsa::errors::Error),
+    /// Error when id_token has an unimplemented hash algorithm
+    HashAlgorithmUnimplementedError(HashAlgorithmUnimplementedError),
 }
 
 impl Display for Error {
@@ -38,6 +40,7 @@ impl Display for Error {
             Self::IDTokenClientIDNotFoundError(e) => Display::fmt(&e, f),
             Self::RS256SignatureError(e) => Display::fmt(&e, f),
             Self::RS256Error(e) => Display::fmt(&e, f),
+            Self::HashAlgorithmUnimplementedError(e) => Display::fmt(&e, f),
         }
     }
 }
@@ -197,5 +200,32 @@ impl From<rsa::errors::Error> for Error {
     #[inline]
     fn from(err: rsa::errors::Error) -> Self {
         Self::RS256Error(err)
+    }
+}
+
+#[derive(Debug)]
+pub struct HashAlgorithmUnimplementedError {
+    pub get: String,
+}
+
+impl HashAlgorithmUnimplementedError {
+    #[inline]
+    pub fn new<S: ToString>(get: S) -> Self {
+        Self { get: get.to_string() }
+    }
+}
+
+impl Display for HashAlgorithmUnimplementedError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "id_token: unimplemented hash alg: {}", self.get)
+    }
+}
+
+impl std::error::Error for HashAlgorithmUnimplementedError {}
+
+impl From<HashAlgorithmUnimplementedError> for Error {
+    #[inline]
+    fn from(err: HashAlgorithmUnimplementedError) -> Self {
+        Self::HashAlgorithmUnimplementedError(err)
     }
 }
