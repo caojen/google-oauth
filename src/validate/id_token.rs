@@ -11,26 +11,29 @@ use rsa::sha2::Sha256;
 use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
 
-use crate::{GOOGLE_ISS, GooglePayload};
+use crate::{GOOGLE_ISS, GoogleIssuerNotMatchError, GooglePayload, IDTokenClientIDNotFoundError, MyResult};
 use crate::Cert;
 use crate::jwt_parser::JwtParser;
 
-pub fn validate_info<T, V>(client_ids: T, parser: &JwtParser<GooglePayload>) -> anyhow::Result<()>
+pub fn validate_info<T, V>(client_ids: T, parser: &JwtParser<GooglePayload>) -> MyResult<()>
     where
         T: AsRef<[V]>,
         V: AsRef<str>,
 {
     if !client_ids.as_ref().iter().any(|c| c.as_ref() == parser.payload.aud.as_str()) {
-        bail!("id_token: audience provided does not match aud claim in the jwt");
+        // bail!("id_token: audience provided does not match aud claim in the jwt");
+        Err(IDTokenClientIDNotFoundError::new(&parser.payload.aud, client_ids))?
     }
 
     if !GOOGLE_ISS.contains(&(parser.payload.iss.as_str())) {
-        bail!("id_token: iss = {}, but expects one of {:?}", &parser.payload.iss, GOOGLE_ISS)
+        Err(GoogleIssuerNotMatchError::new(&parser.payload.iss))?
     }
 
-    if SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() > parser.payload.exp {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+
+    if now > parser.payload.exp {
         #[cfg(not(test))]
-        bail!("id_token: token expired");
+        Err(crate::IDTokenExpiredError::new(now, parser.payload.exp))?
     }
 
     Ok(())
@@ -50,13 +53,13 @@ pub fn do_validate(cert: &Cert, parser: &JwtParser<GooglePayload>) -> anyhow::Re
     Ok(())
 }
 
-fn decode<T: AsRef<[u8]>>(b64url: T) -> anyhow::Result<Vec<u8>> {
+fn decode<T: AsRef<[u8]>>(b64url: T) -> MyResult<Vec<u8>> {
     let bytes = BASE64_URL_SAFE_NO_PAD.decode(b64url)?;
 
     Ok(bytes)
 }
 
-pub fn validate_rs256(cert: &Cert, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
+pub fn validate_rs256(cert: &Cert, msg: &str, sig: &[u8]) -> MyResult<()> {
     let dn = decode(cert.n.as_bytes())?;
     let de = decode(cert.e.as_bytes())?;
 
