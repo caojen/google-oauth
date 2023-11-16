@@ -9,6 +9,7 @@ use log::debug;
 use crate::certs::{Cert, Certs};
 use crate::jwt_parser::JwtParser;
 use crate::validate::id_token;
+use crate::MyResult;
 
 lazy_static! {
     static ref cb: reqwest::blocking::Client = reqwest::blocking::Client::new();
