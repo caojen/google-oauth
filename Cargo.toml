@@ -18,7 +18,7 @@ readme = "README.md"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 anyhow = { version = "1" }
-reqwest = { version = "0.11" }
+reqwest = { version = "0.11", default-features=false }
 lazy_static = { version = "1" }
 base64 = { version = "0.21" }
 sha256 = { version = "1", default-features = false }
@@ -32,11 +32,13 @@ wasm-bindgen-futures = { version = "0.4.37", optional = true }
 web-time = { version = "0.2.3", optional = true }
 
 [features]
+default = ["reqwest/default-tls"]
 blocking = ["reqwest/blocking"]
 wasm = ["dep:wasm-bindgen-futures", "dep:wasm-bindgen", "dep:web-time"]
+reqwest-rustls = ["reqwest/rustls-tls"]
 
 [dev-dependencies]
-tokio = { version = "1", features = ["macros"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 env_logger = "0.10.0"
 
 [lib]
