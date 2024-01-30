@@ -139,6 +139,7 @@
 //! + `default`: enable `AsyncClient`.
 //! + `blocking`: enable `Client`.
 //! + `wasm`: disable `AsyncClient` and `Client`(`blocking`), enable `Client` (`wasm`).
+//! + `reqwest-rustls`: use rustls as the TLS backend of the Reqwest client
 //!
 
 #[cfg(feature = "blocking")]
