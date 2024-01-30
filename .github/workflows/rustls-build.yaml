@@ -1,4 +1,4 @@
-name: Blocking Build
+name: rustls Build
 
 on:
   push:
