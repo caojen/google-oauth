@@ -58,6 +58,13 @@ impl AsyncClient {
         let client_id = client_id.to_string();
 
         if !client_id.is_empty() {
+            // check if client_id exists?
+            {
+                if self.client_ids.read().await.contains(&client_id) {
+                    return
+                }
+            }
+
             self.client_ids.write().await.push(client_id)
         }
     }
