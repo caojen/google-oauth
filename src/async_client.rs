@@ -27,7 +27,7 @@ impl AsyncClient {
     /// Create a new async client.
     pub fn new<S: ToString>(client_id: S) -> Self {
         let client_id = client_id.to_string();
-        Self::new_with_vec(&[client_id])
+        Self::new_with_vec([client_id])
     }
 
     /// Create a new async client, with multiple client ids.
