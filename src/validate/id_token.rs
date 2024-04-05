@@ -66,7 +66,7 @@ pub fn validate_rs256(cert: &Cert, msg: &str, sig: &[u8]) -> MyResult<()> {
         BigUint::from_bytes_be(de.as_slice()),
     )?;
 
-    let verifying_key: VerifyingKey<Sha256> = VerifyingKey::new_with_prefix(pk);
+    let verifying_key: VerifyingKey<Sha256> = VerifyingKey::new(pk);
 
     verifying_key.verify(
         msg.as_bytes(),
