@@ -19,7 +19,7 @@ pub fn validate_info<T, V>(client_ids: T, parser: &JwtParser<GooglePayload>) -> 
         T: AsRef<[V]>,
         V: AsRef<str>,
 {
-    if !client_ids.as_ref().iter().any(|c| c.as_ref() == parser.payload.aud.as_str()) {
+    if !client_ids.as_ref().is_empty() && !client_ids.as_ref().iter().any(|c| c.as_ref() == parser.payload.aud.as_str()) {
         // bail!("id_token: audience provided does not match aud claim in the jwt");
         Err(IDTokenClientIDNotFoundError::new(&parser.payload.aud, client_ids))?
     }

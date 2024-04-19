@@ -53,6 +53,12 @@
 //!     println!("Hello, I am {}", &payload.sub);
 //! }
 //! ```
+//! 
+//! **Do verification without any client id**
+//! 
+//! When no `client_id` is provided for `AsyncClient`, `cliend_id` will not be used when validating `id_token`.
+//! In this case, `AsyncClient` will accept all `client_id`.
+//! However, Google issuer (`iss`), expiration (`exp`) and JWT hash **CAN NOT** be skipped.
 //!
 //! ### 3. Do Verification (`AccessToken`)
 //!
