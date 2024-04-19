@@ -109,9 +109,6 @@
 //!
 //! You can use `google_oauth::Client` to validate tokens:
 //! ```rust
-//! use google_oauth::Client;
-//!
-//! fn main() {
 //!     let client_id = "your client id";
 //!     let id_token = "the id_token";
 //!
@@ -120,7 +117,6 @@
 //!     let payload = client.validate_id_token(id_token).unwrap();
 //!
 //!     println!("Hello, I am {}", &payload.sub);
-//! }
 //! ```
 //!
 //! > For full example, please view ./examples/blocking/
