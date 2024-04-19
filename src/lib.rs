@@ -109,6 +109,8 @@
 //!
 //! You can use `google_oauth::Client` to validate tokens:
 //! ```rust
+//!     use google_oauth::Client;
+//!
 //!     let client_id = "your client id";
 //!     let id_token = "the id_token";
 //!
