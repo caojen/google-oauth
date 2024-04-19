@@ -118,6 +118,33 @@ impl AsyncClient {
         Ok(parser.payload)
     }
 
+    /// parse information from `id_token`, without any verification.
+    /// 
+    /// Warning: This method would NOT validate the `id_token`. Use [Self::validate_id_token] to do verification with your client ID.
+    pub fn parse_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
+        where S: AsRef<str>
+    {
+        let token = token.as_ref();
+        let parser: JwtParser<GooglePayload> = JwtParser::parse(token)?;
+
+        Ok(parser.payload)
+    }
+
+    /// parse or validate `id_token`.
+    /// 
+    /// If any client ID has been provided, do validation.
+    /// Or just parse the information otherwise.
+    pub async fn parse_or_validate_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
+        where S: AsRef<str>
+    {
+        let client_ids = self.client_ids.read().await;
+        if client_ids.is_empty() {
+            return self.parse_id_token(token);
+        }
+
+        self.validate_id_token(token).await
+    }
+
     async fn get_cert(&self, alg: &str, kid: &str) -> MyResult<Cert> {
         {
             let cached_certs = self.cached_certs.read().await;

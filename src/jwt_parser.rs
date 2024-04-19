@@ -1,7 +1,7 @@
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
-use base64::prelude::{BASE64_URL_SAFE_NO_PAD};
+use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use crate::{IDTokenSplitError, MyResult};
 
 #[derive(Debug)]
