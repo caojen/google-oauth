@@ -93,8 +93,19 @@ impl AsyncClient {
     pub async fn validate_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
         where S: AsRef<str>
     {
-        let token = token.as_ref();
+        // fast check:
+        // if there is no given client id, simple return without communicating with Google server.
+
         let client_ids = self.client_ids.read().await;
+
+        if client_ids.is_empty() {
+            return Err(Error::IDTokenClientIDNotFoundError(IDTokenClientIDNotFoundError {
+                get: token.as_ref().to_string(),
+                expected: Default::default(),
+            }))
+        }
+
+        let token = token.as_ref();
 
         let parser: JwtParser<GooglePayload> = JwtParser::parse(token)?;
 
