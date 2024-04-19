@@ -5,9 +5,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use base64::Engine;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use rsa::BigUint;
-use rsa::pkcs1v15::VerifyingKey;
+use rsa::pkcs1v15::{VerifyingKey};
 use rsa::sha2::Sha256;
-use rsa::signature::Verifier;
+use rsa::signature::{Verifier};
 use rsa::pkcs1v15::Signature;
 
 use crate::{GOOGLE_ISS, GoogleIssuerNotMatchError, GooglePayload, HashAlgorithmUnimplementedError, IDTokenClientIDNotFoundError, MyResult};
