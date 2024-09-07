@@ -25,7 +25,7 @@ sha256 = { version = "1", default-features = false }
 rsa = { version = "0.9.6", features = ["sha2"] }
 hex = { version = "0.4" }
 log = { version = "0.4" }
-async-rwlock = { version = "1" }
+async-lock = { version = "3.4" }
 getrandom = { version = "0.2.10", features = ["js"] }
 wasm-bindgen = { version = "0.2.87", optional = true }
 wasm-bindgen-futures = { version = "0.4.37", optional = true }
