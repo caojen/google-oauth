@@ -4,7 +4,7 @@ use std::ops::Add;
 use std::sync::Arc;
 use web_time::Instant;
 use std::time::Duration;
-use async_rwlock::RwLock;
+use async_lock::RwLock;
 use wasm_bindgen::prelude::*;
 use crate::{Cert, Certs, GOOGLE_OAUTH_V3_USER_INFO_API, GOOGLE_SA_CERTS_URL, GoogleAccessTokenPayload, GooglePayload, utils};
 use anyhow::bail;
