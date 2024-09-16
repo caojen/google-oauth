@@ -18,7 +18,7 @@ readme = "README.md"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 anyhow = { version = "1" }
-reqwest = { version = "0.12", default-features=false }
+reqwest = { version = "0.12", default-features = false }
 lazy_static = { version = "1" }
 base64 = { version = "0.22" }
 sha256 = { version = "1", default-features = false }
