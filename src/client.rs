@@ -51,14 +51,14 @@ impl Client {
     /// Set the timeout (which is used in fetching google certs).
     /// Default timeout is 5 seconds. Zero timeout will be ignored.
     pub fn timeout(mut self, d: Duration) -> Self {
-        if d.as_nanos() != 0 {
+        if !d.is_zero() {
             self.timeout = d;
         }
 
         self
     }
 
-    /// Do verification with `id_token`. If succeed, return the user data.
+    /// Do verification with `id_token`. If success, return the user data.
     pub fn validate_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
         where S: AsRef<str>
     {
@@ -96,8 +96,8 @@ impl Client {
         // parse the response header `max-age`.
         let max_age = utils::parse_max_age_from_resp(&resp);
 
-        let text = resp.text()?;
-        *cached_certs = serde_json::from_str(&text)?;
+        let info = resp.bytes()?;
+        *cached_certs = serde_json::from_slice(&info)?;
 
         cached_certs.set_cache_until(
             Instant::now().add(Duration::from_secs(max_age))
@@ -106,7 +106,7 @@ impl Client {
         cached_certs.find_cert(alg, kid)
     }
 
-    /// Try to validate access token. If succeed, return the user info.
+    /// Try to validate access token. If success, return the user info.
     pub fn validate_access_token<S>(&self, token: S) -> MyResult<GoogleAccessTokenPayload>
         where S: AsRef<str>
     {
@@ -115,9 +115,9 @@ impl Client {
         let info = cb.get(format!("{}?access_token={}", GOOGLE_OAUTH_V3_USER_INFO_API, token))
             .timeout(self.timeout)
             .send()?
-            .text()?;
+            .bytes()?;
 
-        let payload = serde_json::from_str(&info)?;
+        let payload = serde_json::from_slice(&info)?;
 
         Ok(payload)
     }

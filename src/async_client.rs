@@ -82,26 +82,24 @@ impl AsyncClient {
     /// Set the timeout (used in fetching google certs).
     /// Default timeout is 5 seconds. Zero timeout will be ignored.
     pub fn timeout(mut self, d: Duration) -> Self {
-        if d.as_nanos() != 0 {
+        if !d.is_zero() {
             self.timeout = d;
         }
 
         self
     }
 
-    /// Do verification with `id_token`. If succeed, return the user data.
+    /// Do verification with `id_token`. If success, return the user data.
     pub async fn validate_id_token<S>(&self, token: S) -> MyResult<GooglePayload>
-        where S: AsRef<str>
+    where S: AsRef<str>
     {
         let token = token.as_ref();
         let client_ids = self.client_ids.read().await;
 
-        let parser: JwtParser<GooglePayload> = JwtParser::parse(token)?;
-
+        let parser = JwtParser::parse(token)?;
         id_token::validate_info(&*client_ids, &parser)?;
 
-        let cert = self.get_cert(parser.header.alg.as_str(), parser.header.kid.as_str()).await?;
-
+        let cert = self.get_cert(&parser.header.alg, &parser.header.kid).await?;
         id_token::do_validate(&cert, &parser)?;
 
         Ok(parser.payload)
@@ -129,17 +127,14 @@ impl AsyncClient {
         // parse the response header `age` and `max-age`.
         let max_age = utils::parse_max_age_from_async_resp(&resp);
 
-        let text = resp.text().await?;
-        *cached_certs = serde_json::from_str(&text)?;
+        let info = resp.bytes().await?;
+        *cached_certs = serde_json::from_slice(&info)?;
 
-        cached_certs.set_cache_until(
-            Instant::now().add(Duration::from_secs(max_age))
-        );
-
+        cached_certs.set_cache_until(Instant::now().add(Duration::from_secs(max_age)));
         cached_certs.find_cert(alg, kid)
     }
 
-    /// Try to validate access token. If succeed, return the user info.
+    /// Try to validate access token. If success, return the user info.
     pub async fn validate_access_token<S>(&self, token: S) -> MyResult<GoogleAccessTokenPayload>
         where S: AsRef<str>
     {
@@ -149,12 +144,10 @@ impl AsyncClient {
             .timeout(self.timeout)
             .send()
             .await?
-            .text()
+            .bytes()
             .await?;
 
-        let payload = serde_json::from_str(&info)?;
-
-        Ok(payload)
+        Ok(serde_json::from_slice(&info)?)
     }
 }
 
