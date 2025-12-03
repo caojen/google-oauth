@@ -1,6 +1,6 @@
 [package]
 name = "google-oauth"
-version = "1.11.3"
+version = "1.11.4"
 edition = "2021"
 description = "Google oauth server-side client"
 license = "MIT"
@@ -21,15 +21,16 @@ anyhow = { version = "1" }
 reqwest = { version = "0.12", default-features = false }
 lazy_static = { version = "1" }
 base64 = { version = "0.22" }
-sha256 = { version = "1", default-features = false }
-rsa = { version = "0.9", features = ["sha2"] }
-hex = { version = "0.4" }
+rsa = { version = "0.9.9", features = ["sha2"] }
 log = { version = "0.4" }
 async-lock = { version = "3.4" }
-getrandom = { version = "0.2", features = ["js"] }
 wasm-bindgen = { version = "0.2", optional = true }
 wasm-bindgen-futures = { version = "0.4", optional = true }
 web-time = { version = "1", optional = true }
+# wasm dependencies
+sha256 = { version = "1", default-features = false }
+hex = { version = "0.4" }
+getrandom = { version = "0.2", features = ["js"] }
 
 [features]
 default = ["reqwest/default-tls"]
@@ -39,7 +40,6 @@ reqwest-rustls = ["reqwest/rustls-tls"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-env_logger = "0.11"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
