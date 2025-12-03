@@ -30,7 +30,7 @@ web-time = { version = "1", optional = true }
 # wasm dependencies
 sha256 = { version = "1", default-features = false }
 hex = { version = "0.4" }
-getrandom = { version = "0.3", features = ["js"] }
+getrandom = { version = "0.2", features = ["js"] }
 
 [features]
 default = ["reqwest/default-tls"]
